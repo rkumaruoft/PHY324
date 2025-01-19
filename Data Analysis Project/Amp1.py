@@ -153,6 +153,7 @@ plt.show()
 Amp1 calibration
 """
 c_factor = 10 / popt1[1]  # in keV/mV
+print(c_factor)
 amp1 *= c_factor
 num_bins1 = 60
 bin_range1 = (0.25 * c_factor, 0.45 * c_factor)

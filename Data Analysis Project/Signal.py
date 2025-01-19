@@ -36,17 +36,17 @@ def fit_pulse(x, A):
 
 # fit_pulse can be used by curve_fit to fit a pulse to the pulse_shape
 
-with open("noise.pkl", "rb") as file:
-    noise_data = pickle.load(file)
+with open("signal.pkl", "rb") as file:
+    signal_data = pickle.load(file)
 
 
-# for itrace in range(10):
-#     plt.plot(noise_data['evt_%i' % itrace], alpha=0.3)
-# plt.xlabel('Sample Index')
-# plt.ylabel('Readout (V)')
-# plt.title('Signal data (10 sets)')
-# plt.legend(loc=1)
-# plt.show()
+for itrace in range(10):
+    plt.plot(signal_data['evt_%i' % itrace], alpha=0.3)
+plt.xlabel('Sample Index')
+plt.ylabel('Readout (V)')
+plt.title('Signal data (10 sets)')
+plt.legend(loc=1)
+plt.show()
 
 
 """
@@ -57,17 +57,19 @@ larger than any of the actual pulses to make it visible.
 """
 
 amp2 = np.zeros(1000)
+
+
 for ievt in range(1000):
-    current_data = noise_data['evt_%i' % ievt]
+    current_data = signal_data['evt_%i' % ievt]
     baseline_avg = np.mean(current_data[0:1000])
     amp2[ievt] = np.max(current_data) - baseline_avg
 
 amp2 *= 1000  # convert from V to mV
-c_factor = 35.57502048102809
+c_factor = 35.62321912581909
 amp2 *= c_factor
 num_bins1 = 80
 print(min(amp2), max(amp2))
-bin_range1 = (min(amp2) - 0.2, max(amp2) + 0.2)
+bin_range1 = (min(amp2), max(amp2))
 """
 These two values were picked by trial and error. You'll
 likely want different values for each estimator.
@@ -76,7 +78,7 @@ likely want different values for each estimator.
 n1, bin_edges1, _ = plt.hist(amp2, bins=num_bins1, range=bin_range1, color='k', histtype='step', label='Data')
 # This plots the histogram AND saves the counts and bin_edges for later use
 
-plt.xlabel('Energy Amplitude of Noise (keV)')
+plt.xlabel('Particle Energy (keV)')
 plt.ylabel('Number of Events')
 plt.xlim(bin_range1)
 
@@ -89,5 +91,5 @@ sig1 = np.where(sig1 == 0, 1, sig1)
 
 plt.errorbar(bin_centers1, n1, yerr=sig1, fmt='none', c='k')
 # This adds errorbars to the histograms, where each uncertainty is sqrt(y)
-plt.savefig("Noise_Amp2.png")
+plt.savefig("Signal_Amp2")
 plt.show()
