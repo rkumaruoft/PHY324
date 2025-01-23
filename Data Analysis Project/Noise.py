@@ -1,93 +1,76 @@
 import pickle
 import matplotlib.pyplot as plt
-from matplotlib import rc
 import numpy as np
 from scipy.optimize import curve_fit
-from scipy.stats import chi2
 
-font = {'family': 'DejaVu Sans',
-        'weight': 'normal',
-        'size': 10}
-rc('font', **font)
-
-
-# This changes the fonts for all graphs to make them bigger.
-
-
+# Define Gaussian function for fitting
 def myGauss(x, A, mean, width, base):
     return A * np.exp(-(x - mean) ** 2 / (2 * width ** 2)) + base
 
-
-# This is my fitting function, a Guassian with a uniform background.
-
-def pulse_shape(t_rise, t_fall):
-    xx = np.linspace(0, 4095, 4096)
-    yy = -(np.exp(-(xx - 1000) / t_rise) - np.exp(-(xx - 1000) / t_fall))
-    yy[:1000] = 0
-    yy /= np.max(yy)
-    return yy
-
-
-def fit_pulse(x, A):
-    _pulse_template = pulse_shape(20, 80)
-    xx = np.linspace(0, 4095, 4096)
-    return A * np.interp(x, xx, _pulse_template)
-
-
-# fit_pulse can be used by curve_fit to fit a pulse to the pulse_shape
-
+# Load the noise data
 with open("noise.pkl", "rb") as file:
     noise_data = pickle.load(file)
 
-
-# for itrace in range(10):
-#     plt.plot(noise_data['evt_%i' % itrace], alpha=0.3)
-# plt.xlabel('Sample Index')
-# plt.ylabel('Readout (V)')
-# plt.title('Signal data (10 sets)')
-# plt.legend(loc=1)
-# plt.show()
-
-
-"""
-This shows the first 10 data sets on top of each other.
-Always a good idea to look at some of your data before analysing it!
-It also plots our pulse template which has been scaled to be slightly
-larger than any of the actual pulses to make it visible.
-"""
-
-amp2 = np.zeros(1000)
+# Gather all raw noise samples into a single array
+all_noise_samples = []
 for ievt in range(1000):
-    current_data = noise_data['evt_%i' % ievt]
-    baseline_avg = np.mean(current_data[0:1000])
-    amp2[ievt] = np.max(current_data) - baseline_avg
+    current_data = noise_data[f'evt_{ievt}']
+    all_noise_samples.extend(current_data)
 
-amp2 *= 1000  # convert from V to mV
-c_factor = 35.57502048102809
-amp2 *= c_factor
-num_bins1 = 80
-print(min(amp2), max(amp2))
-bin_range1 = (min(amp2) - 0.2, max(amp2) + 0.2)
-"""
-These two values were picked by trial and error. You'll
-likely want different values for each estimator.
-"""
+# Convert to mV (raw values)
+all_noise_samples = np.array(all_noise_samples) * 1000  # Convert from V to mV
 
-n1, bin_edges1, _ = plt.hist(amp2, bins=num_bins1, range=bin_range1, color='k', histtype='step', label='Data')
-# This plots the histogram AND saves the counts and bin_edges for later use
+# Apply calibration factor to convert mV to keV
+calibration_factor = 39.03182106539658  # keV/mV
+all_noise_samples_keV = all_noise_samples * calibration_factor
 
-plt.xlabel('Energy Amplitude of Noise (keV)')
+# Create histogram of raw noise fluctuations
+num_bins = 100
+bin_range = (min(all_noise_samples_keV), max(all_noise_samples_keV))
+n, bin_edges, _ = plt.hist(all_noise_samples_keV, bins=num_bins, range=bin_range, color='k', histtype='step', label='Data')
+bin_centers = 0.5 * (bin_edges[1:] + bin_edges[:-1])
+
+# Add error bars
+sig = np.sqrt(n)
+sig = np.where(sig == 0, 1, sig)  # Replace 0 uncertainties with 1
+plt.errorbar(bin_centers, n, yerr=sig, fmt='none', c='k')
+
+# Fit Gaussian to the histogram
+popt, pcov = curve_fit(myGauss, bin_centers, n, sigma=sig,
+                       p0=[max(n), np.mean(all_noise_samples_keV), np.std(all_noise_samples_keV), min(n)],
+                       absolute_sigma=True)
+
+# Plot Gaussian fit
+x_bestfit = np.linspace(bin_range[0], bin_range[1], 1000)
+y_bestfit = myGauss(x_bestfit, *popt)
+plt.plot(x_bestfit, y_bestfit, label='Gaussian Fit', color='r')
+
+# Plot details
+plt.xlabel('Raw Noise Energy (keV)')
 plt.ylabel('Number of Events')
-plt.xlim(bin_range1)
+plt.xlim(bin_range)
+plt.legend()
+# plt.title('Histogram of Raw Noise Fluctuations with Gaussian Fit')
 
-bin_centers1 = 0.5 * (bin_edges1[1:] + bin_edges1[:-1])
-# If the legend covers some data, increase the plt.xlim value, maybe (0,0.5)
+# Print results
+mean = popt[1]
+sigma = popt[2]
+noise_range = (mean - 2 * sigma, mean + 2 * sigma)
+print("Histogram of Raw Noise Fluctuations (in keV):")
+print("Amp = ", popt[0], "err= ")
+print("Mean (mu):", mean, "keV" , "err = ", np.sqrt(pcov[1][1]))
+print("Standard Deviation (sigma):", sigma, "keV")
+print("Noise Range (mu ± 2σ):", noise_range, "err = ", np.sqrt(pcov[2][2]))
 
-sig1 = np.sqrt(n1)
-sig1 = np.where(sig1 == 0, 1, sig1)
-# The uncertainty on 0 count is 1, not 0. Replace all 0s with 1s.
+# Calculate chi-squared
+n1_fit = myGauss(bin_centers, *popt)  # Gaussian fit values
+chisquared = np.sum(((n - n1_fit) / sig) ** 2)  # Chi-squared
+dof = num_bins - len(popt)  # Degrees of freedom
+reduced_chisquared = chisquared / dof  # Reduced chi-squared
 
-plt.errorbar(bin_centers1, n1, yerr=sig1, fmt='none', c='k')
-# This adds errorbars to the histograms, where each uncertainty is sqrt(y)
-plt.savefig("Noise_Amp2.png")
+# Print results
+print("Reduced Chi-Squared (χ²/DOF):", reduced_chisquared)
+
+# Save and show the plot
+plt.savefig("plots/histogram_raw_noise_fluctuations_keV.png")
 plt.show()

@@ -56,15 +56,17 @@ Always a good idea to look at some of your data before analysing it!
 It also plots our pulse template which has been scaled to be slightly
 larger than any of the actual pulses to make it visible.
 """
-noise_range =  (np.float64(-1.482478806349072), np.float64(1.4844392997804006))
+noise_range = (np.float64(-0.0379812870162264), np.float64(0.03803151549524719))
 pulse_fit = np.zeros(1000)
 
 
 for ievt in range(1000):
     current_data = signal_data['evt_%i' % ievt]
     baseline_avg = np.mean(current_data[0:1000])
-    data_cleaned = [x - baseline_avg for x in current_data]
-    popt, pcov = curve_fit(fit_pulse, range(len(data_cleaned)), data_cleaned)
+    for i in range(len(current_data)):
+        if current_data[i] <= noise_range[1]:
+            current_data[i] = 0
+    popt, pcov = curve_fit(fit_pulse, range(len(current_data)), current_data)
     pulse_fit[ievt] = popt[0]
 
 
@@ -72,7 +74,7 @@ pulse_fit *= 1000  # convert from V to mV
 c_factor = 39.03182106539658
 pulse_fit *= c_factor # convert to keV
 
-pulse_fit = pulse_fit[(pulse_fit < noise_range[0]) | (pulse_fit > noise_range[1])]
+# pulse_fit = pulse_fit[(pulse_fit < noise_range[0]) | (pulse_fit > noise_range[1])]
 
 num_bins1 = 60
 bin_range1 = (min(pulse_fit), max(pulse_fit))

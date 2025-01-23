@@ -49,27 +49,33 @@ with open("calibration.pkl", "rb") as file:
 # plt.legend(loc=1)
 # plt.show()
 
-area1 = np.zeros(1000)
+noise_range =  (-0.34911406227605846, 0.33236550269480436)
+pulse_fit = np.zeros(1000)
 # These are the 6 energy estimators as empty arrays of the correct size.
 
 for ievt in range(1000):
     current_data = calibration_data['evt_%i' % ievt]
-    area1[ievt] = np.sum(current_data)
+    baseline_avg = np.mean(current_data[0:1000])
+    data_cleaned = [x - baseline_avg for x in current_data]
+    popt, pcov = curve_fit(fit_pulse, range(len(data_cleaned)), data_cleaned)
+    pulse_fit[ievt] = popt[0]
 
-area1 *= 1000  # convert from V to mV
+pulse_fit *= 1000  # convert from V to mV
 
 num_bins1 = 60
-bin_range1 = (min(area1), max(area1))
+# bin_range1 = (min(pulse_fit), max(pulse_fit))
+bin_range1 = (0.23, 0.29)
+print(bin_range1)
 """
 These two values were picked by trial and error. You'll 
 likely want different values for each estimator.
 """
 
-n1, bin_edges1, _ = plt.hist(area1, bins=num_bins1, range=bin_range1, color='k', histtype='step', label='Data')
+n1, bin_edges1, _ = plt.hist(pulse_fit, bins=num_bins1, range=bin_range1, color='k', histtype='step', label='Data')
 # This plots the histogram AND saves the counts and bin_edges for later use
 
-plt.xlabel('Energy Estimator: Area 1(mV)')
-plt.ylabel('Events')
+plt.xlabel('Pulse Amplitude (mV)')
+plt.ylabel('Number of Events')
 plt.xlim(bin_range1)
 # If the legend covers some data, increase the plt.xlim value, maybe (0,0.5)
 
@@ -93,7 +99,7 @@ plt.errorbar(bin_centers1, n1, yerr=sig1, fmt='none', c='k')
 # This adds errorbars to the histograms, where each uncertainty is sqrt(y)
 
 popt1, pcov1 = curve_fit(myGauss, bin_centers1, n1,
-                         sigma=sig1, p0=(60, 50, 10, 5), absolute_sigma=True)
+                         sigma=sig1, p0=(55, 0.25, 0.01, 5), absolute_sigma=True)
 n1_fit = myGauss(bin_centers1, *popt1)
 """
 n1_fit is our best fit line using our data points.
@@ -112,27 +118,32 @@ y_bestfit1 = myGauss(x_bestfit1, *popt1)
 
 fontsize = 18
 plt.plot(x_bestfit1, y_bestfit1, label='Fit')
-plt.text(-110, 60, r'$\mu$ = %3.2f mV' % (popt1[1]), fontsize=fontsize)
-plt.text(-110, 50, r'$\sigma$ = %3.2f mV' % (popt1[2]), fontsize=fontsize)
-plt.text(-110, 40, r'$\chi^2$/DOF=', fontsize=fontsize)
-plt.text(-110, 30, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
-plt.text(-110, 20, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
+# plt.text(0.235, 40, r'$\mu$ = %3.2f mV' % (popt1[1]), fontsize=fontsize)
+# plt.text(0.235, 35, r'$\sigma$ = %3.2f mV' % (popt1[2]), fontsize=fontsize)
+# plt.text(0.235, 30, r'$\chi^2$/DOF=', fontsize=fontsize)
+# plt.text(0.235, 25, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
+# plt.text(0.235, 20, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
 plt.legend(loc='upper right')
+print("Before calibration")
+print("Amp = ", popt1[0], "err = ", np.sqrt(pcov1[0][0]))
+print("mean = ", popt1[1], "err = ", np.sqrt(pcov1[1][1]))
+print("sigma= ", popt1[2], "err = ", np.sqrt(pcov1[2][2]))
+print("reduces_chi=", chisquared1/dof1)
 plt.show()
-
 """
 Area1 calibration
 """
 c_factor = 10 / popt1[1]  # in keV/mV
 c_factor_error = 10 * (np.sqrt(pcov1[1][1])) / (popt1[1]**2)
 print("c_factor = ",c_factor, "keV/mV error = ", c_factor_error)
-area1 *= c_factor
+pulse_fit *= c_factor
 num_bins1 = 60
-bin_range1 = ((min(area1) * c_factor) - 20 , (max(area1) * c_factor) + 30)
-n1, bin_edges1, _ = plt.hist(area1, bins=num_bins1, range=bin_range1, color='k', histtype='step', label='Data')
+bin_range1 = (bin_range1[0] * c_factor, bin_range1[1] * c_factor)
+print(bin_range1)
+n1, bin_edges1, _ = plt.hist(pulse_fit, bins=num_bins1, range=bin_range1, color='k', histtype='step', label='Data')
 # This plots the histogram AND saves the counts and bin_edges for later use
 
-plt.xlabel('Energy Estimator: Area 1 (keV)')
+plt.xlabel('Particle Energy (keV)')
 plt.ylabel('Number of events')
 plt.xlim(bin_range1)
 # If the legend covers some data, increase the plt.xlim value, maybe (0,0.5)
@@ -146,7 +157,7 @@ plt.errorbar(bin_centers1, n1, yerr=sig1, fmt='none', c='k')
 # This adds errorbars to the histograms, where each uncertainty is sqrt(y)
 
 popt1, pcov1 = curve_fit(myGauss, bin_centers1, n1,
-                         sigma=sig1, p0=(50, 10, 2, 5), absolute_sigma=True)
+                         sigma=sig1, p0=(40, 10, 0.2, 5), absolute_sigma=True)
 n1_fit = myGauss(bin_centers1, *popt1)
 """
 n1_fit is our best fit line using our data points.
@@ -163,13 +174,17 @@ x_bestfit1 = np.linspace(bin_edges1[0], bin_edges1[-1], 1000)
 y_bestfit1 = myGauss(x_bestfit1, *popt1)
 # Best fit line smoothed with 1000 datapoints. Don't use best fit lines with 5 or 10 data points!
 
-# fontsize = 18
+fontsize = 18
 plt.plot(x_bestfit1, y_bestfit1, label='Fit')
-plt.text(-20, 60, r'$\mu$ = %3.2f keV' % (popt1[1]), fontsize=fontsize)
-plt.text(-20, 55, r'$\chi^2$/DOF=', fontsize=fontsize)
-plt.text(-20, 50, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
-plt.text(-20, 45, r'$\sigma$ = %3.2f keV' % (popt1[2]), fontsize=fontsize)
-plt.text(-20, 40, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
+# plt.text(9, 40, r'$\mu$ = %3.2f keV' % (popt1[1]), fontsize=fontsize)
+# plt.text(9, 35, r'$\chi^2$/DOF=', fontsize=fontsize)
+# plt.text(9, 30, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
+# plt.text(9, 25, r'$\sigma$ = %3.2f keV' % (popt1[2]), fontsize=fontsize)
+# plt.text(9, 20, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
 plt.legend(loc='upper right')
-print("sigma = ", popt1[2], " error = ", np.sqrt(pcov1[2][2]))
+print("After calibration")
+print("Amp = ", popt1[0], "err = ", np.sqrt(pcov1[0][0]))
+print("mean = ", popt1[1], "err = ", np.sqrt(pcov1[1][1]))
+print("sigma= ", popt1[2], "err = ", np.sqrt(pcov1[2][2]))
+print("reduces_chi=", chisquared1/dof1)
 plt.show()

@@ -127,7 +127,8 @@ plt.show()
 Area1 calibration
 """
 c_factor = 10 / popt1[1]  # in keV/mV
-print("c_factor for area 1: " + str(c_factor))
+c_factor_error = 10 * (np.sqrt(pcov1[1][1])) / (popt1[1]**2)
+print("c_factor = ",c_factor, "keV/mV error = ", c_factor_error)
 area2 *= c_factor
 num_bins1 = 60
 bin_range1 = (-1 * c_factor, 64.5 * c_factor)
@@ -173,4 +174,5 @@ plt.text(0.8, 40, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
 plt.text(0.8, 35, r'$\sigma$ = %3.2f keV' % (popt1[2]), fontsize=fontsize)
 plt.text(0.8, 30, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
 plt.legend(loc='upper right')
+print("sigma = ", popt1[2], " error = ", np.sqrt(pcov1[2][2]))
 plt.show()

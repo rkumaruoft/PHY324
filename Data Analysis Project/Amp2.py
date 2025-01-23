@@ -152,7 +152,8 @@ Amp2 calibration
 """
 c_factor = 10 / popt1[1]  # in keV/mV
 amp2 *= c_factor
-print(c_factor)
+c_factor_error = 10 * (np.sqrt(pcov1[1][1])) / (popt1[1]**2)
+print("c_factor = ",c_factor, "keV/mV error = ", c_factor_error)
 num_bins1 = 60
 bin_range1 = (min(amp2) + 5.5, max(amp2) - 7)
 print(bin_range1)
@@ -207,5 +208,5 @@ print("base_uncert = " + str(uncerts[3]))
 print("amplitude" + str(popt1[0]))
 print("base" + str(popt1[3]))
 
-
+print("sigma = ", popt1[2], " error = ", np.sqrt(pcov1[2][2]))
 plt.show()

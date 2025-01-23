@@ -41,7 +41,7 @@ with open("signal.pkl", "rb") as file:
     signal_data = pickle.load(file)
 
 
-# for itrace in range(10):
+# for itrace in range(500,600):
 #     plt.plot(signal_data['evt_%i' % itrace], alpha=0.3)
 # plt.xlabel('Sample Index')
 # plt.ylabel('Readout (V)')
@@ -103,12 +103,12 @@ plt.show()
 
 
 """
-Particle b/w 7 to 9
+Particle b/w 1 to 5
 """
-sectioned_signal = pulse_fit[(pulse_fit >= 7) & (pulse_fit <= 9)]
-num_bins_sectioned = 20
-bin_range_sectioned = (min(sectioned_signal), max(sectioned_signal))  # Directly specify the range
+sectioned_signal = pulse_fit[(pulse_fit >= noise_range[1]) & (pulse_fit <= 5)]
 
+num_bins_sectioned = 40
+bin_range_sectioned = (1.45, max(sectioned_signal))  # Directly specify the range
 
 n_sectioned, bin_edges_sectioned, _ = plt.hist(
     sectioned_signal, bins=num_bins_sectioned, range=bin_range_sectioned, color='b', histtype='step', label='Sectioned Data'
@@ -125,10 +125,10 @@ sig_sectioned = np.where(sig_sectioned == 0, 1, sig_sectioned)
 
 # Add error bars
 plt.errorbar(bin_centers_sectioned, n_sectioned, yerr=sig_sectioned, fmt='none', c='k')
-plt.title('Sectioned Signal Data (6.5 keV to 9.5 keV)')
+plt.title('Sectioned Signal Data (0 keV to 5 keV)')
 
 popt, pcov = curve_fit(myGauss, bin_centers_sectioned, n_sectioned, sigma=sig_sectioned,
-                       p0=[12, 8.0, 0.5, min(n_sectioned)], absolute_sigma=True)
+                       p0=[12, 2.0, 1, min(n_sectioned)], absolute_sigma=True)
 
 # Calculate the fitted Gaussian curve
 x_bestfit = np.linspace(bin_range_sectioned[0], bin_range_sectioned[1], 1000)
@@ -146,5 +146,6 @@ print("chi_red= ",reduced_chisquared)
 plt.text(bin_range_sectioned[0] + 0.2, max(n_sectioned) * 0.8, r'$\mu$ = {:.2f} keV'.format(mean))
 plt.text(bin_range_sectioned[0] + 0.2, max(n_sectioned) * 0.7, r'$\sigma$ = {:.2f} keV'.format(sigma))
 plt.text(bin_range_sectioned[0] + 0.2, max(n_sectioned) * 0.6, r'$\chi^2$/DOF = {:.2f}'.format(reduced_chisquared))
+
 plt.legend()
 plt.show()

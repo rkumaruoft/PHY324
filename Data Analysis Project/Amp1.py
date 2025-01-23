@@ -18,7 +18,7 @@ def myGauss(x, A, mean, width, base):
     return A * np.exp(-(x - mean) ** 2 / (2 * width ** 2)) + base
 
 
-# This is my fitting function, a Guassian with a uniform background.
+# This is my fitting function, a Gaussian with a uniform background.
 
 def pulse_shape(t_rise, t_fall):
     xx = np.linspace(0, 4095, 4096)
@@ -40,13 +40,14 @@ with open("calibration.pkl", "rb") as file:
     calibration_data = pickle.load(file)
 
 pulse_template = pulse_shape(20, 80)
-plt.plot(pulse_template / 2000, label='Pulse Template', color='r')
+plt.plot(pulse_template / 2000, label='Ideal Pulse', color='r')
 for itrace in range(10):
     plt.plot(calibration_data['evt_%i' % itrace], alpha=0.3)
 plt.xlabel('Sample Index')
 plt.ylabel('Readout (V)')
-plt.title('Calibration data (10 sets)')
+# plt.title('Calibration data (10 sets)')
 plt.legend(loc=1)
+plt.savefig("plots\pulse_template.png")
 plt.show()
 
 """ 
@@ -153,7 +154,8 @@ plt.show()
 Amp1 calibration
 """
 c_factor = 10 / popt1[1]  # in keV/mV
-print(c_factor)
+c_factor_error = 10 * (np.sqrt(pcov1[1][1])) / (popt1[1]**2)
+print("c_factor = ",c_factor, "keV/mV error = ", c_factor_error)
 amp1 *= c_factor
 num_bins1 = 60
 bin_range1 = (0.25 * c_factor, 0.45 * c_factor)
@@ -191,14 +193,15 @@ x_bestfit1 = np.linspace(bin_edges1[0], bin_edges1[-1], 1000)
 y_bestfit1 = myGauss(x_bestfit1, *popt1)
 # Best fit line smoothed with 1000 datapoints. Don't use best fit lines with 5 or 10 data points!
 
-fontsize = 18
+fontsize = 9
 plt.plot(x_bestfit1, y_bestfit1, label='Fit')
-plt.text(6, 80, r'$\mu$ = %3.2f keV' % (popt1[1]), fontsize=fontsize)
-plt.text(6, 70, r'$\sigma$ = %3.2f keV' % (popt1[2]), fontsize=fontsize)
-plt.text(6, 60, r'$\chi^2$/DOF=', fontsize=fontsize)
-plt.text(6, 50, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
-plt.text(6, 40, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
+plt.text(7.5, 60, r'$\mu$ = %3.2f keV' % (popt1[1]), fontsize=fontsize)
+plt.text(7.5, 50, r'$\sigma$ = %3.2f keV' % (popt1[2]), fontsize=fontsize)
+plt.text(7.5, 40, r'$\chi^2$/DOF=', fontsize=fontsize)
+plt.text(7.5, 30, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
+plt.text(7.5, 20, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
 plt.legend(loc='upper right')
+print("sigma = ", popt1[2], " error = ", np.sqrt(pcov1[2][2]))
 plt.show()
 
 """
