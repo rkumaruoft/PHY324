@@ -49,45 +49,30 @@ with open("calibration.pkl", "rb") as file:
 # plt.legend(loc=1)
 # plt.show()
 
-""" 
-This shows the first 10 data sets on top of each other.
-Always a good idea to look at some of your data before analysing it!
-It also plots our pulse template which has been scaled to be slightly 
-larger than any of the actual pulses to make it visible.
-"""
-
-amp2 = np.zeros(1000)
+pulse_fit = np.zeros(1000)
 # These are the 6 energy estimators as empty arrays of the correct size.
 
 for ievt in range(1000):
     current_data = calibration_data['evt_%i' % ievt]
-    baseline_avg = np.mean(current_data[0:1000])
-    amp2[ievt] = np.max(current_data) - baseline_avg
+    popt, pcov = curve_fit(fit_pulse, range(len(current_data)), current_data)
+    pulse_fit[ievt] = popt[0]
 
-"""
-This incorrectly calculates one of the amplitude estimators.
-You will want to fix it, and then do the other 5 estimators 
-inside this for loop. I.e. you will need to add:
-    amp2[ievt] = ...
-    area1[ievt] = ...
-etc.
-"""
-
-amp2 *= 1000  # convert from V to mV
+pulse_fit *= 1000  # convert from V to mV
 
 num_bins1 = 60
-bin_range1 = (min(amp2) + 0.13, max(amp2) - 0.18)
+# bin_range1 = (min(pulse_fit), max(pulse_fit))
+bin_range1 = (0.17, 0.35)
 print(bin_range1)
 """
 These two values were picked by trial and error. You'll 
 likely want different values for each estimator.
 """
 
-n1, bin_edges1, _ = plt.hist(amp2, bins=num_bins1, range=bin_range1, color='k', histtype='step', label='Data')
+n1, bin_edges1, _ = plt.hist(pulse_fit, bins=num_bins1, range=bin_range1, color='k', histtype='step', label='Data')
 # This plots the histogram AND saves the counts and bin_edges for later use
 
-plt.xlabel('Pulse Amplitude (mV)')
-plt.ylabel('Number of Events')
+plt.xlabel('Energy Estimator: Pulse Fit(mV)')
+plt.ylabel('Events')
 plt.xlim(bin_range1)
 # If the legend covers some data, increase the plt.xlim value, maybe (0,0.5)
 
@@ -111,16 +96,8 @@ plt.errorbar(bin_centers1, n1, yerr=sig1, fmt='none', c='k')
 # This adds errorbars to the histograms, where each uncertainty is sqrt(y)
 
 popt1, pcov1 = curve_fit(myGauss, bin_centers1, n1,
-                         sigma=sig1, p0=(70, 0.28, 0.02, 5), absolute_sigma=True)
+                         sigma=sig1, p0=(55, 0.25, 0.01, 5), absolute_sigma=True)
 n1_fit = myGauss(bin_centers1, *popt1)
-uncerts = np.sqrt(np.diag(pcov1))
-print("mu_uncert = " + str(uncerts[1]))
-print("sigma_uncert = " + str(uncerts[2]))
-print("amplitude_uncert = " + str(uncerts[0]))
-print("base_uncert = " + str(uncerts[3]))
-print("amplitude" + str(popt1[0]))
-print("base" + str(popt1[3]))
-
 """
 n1_fit is our best fit line using our data points.
 Note that if you have few enough bins, this best fit
@@ -138,29 +115,28 @@ y_bestfit1 = myGauss(x_bestfit1, *popt1)
 
 fontsize = 18
 plt.plot(x_bestfit1, y_bestfit1, label='Fit')
-plt.text(0.21, 80, r'$\mu$ = %3.2f mV' % (popt1[1]), fontsize=fontsize)
-plt.text(0.21, 70, r'$\sigma$ = %3.2f mV' % (popt1[2]), fontsize=fontsize)
-plt.text(0.21, 60, r'$\chi^2$/DOF=', fontsize=fontsize)
-plt.text(0.21, 50, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
-plt.text(0.21, 40, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
+plt.text(0.18, 40, r'$\mu$ = %3.2f mV' % (popt1[1]), fontsize=fontsize)
+plt.text(0.18, 35, r'$\sigma$ = %3.2f mV' % (popt1[2]), fontsize=fontsize)
+plt.text(0.18, 30, r'$\chi^2$/DOF=', fontsize=fontsize)
+plt.text(0.18, 25, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
+plt.text(0.18, 20, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
 plt.legend(loc='upper right')
-plt.savefig("Amp2_pre_cal.png")
 plt.show()
 
+plt.savefig("plots/")
 """
-Amp2 calibration
+Area1 calibration
 """
 c_factor = 10 / popt1[1]  # in keV/mV
-amp2 *= c_factor
-print(c_factor)
+print("c_factor for : " + str(c_factor))
+pulse_fit *= c_factor
 num_bins1 = 60
-bin_range1 = (min(amp2) + 5.5, max(amp2) - 7)
-print(bin_range1)
-n1, bin_edges1, _ = plt.hist(amp2, bins=num_bins1, range=bin_range1, color='k', histtype='step', label='Data')
+bin_range1 = (0.17 * c_factor, 0.35 * c_factor)
+n1, bin_edges1, _ = plt.hist(pulse_fit, bins=num_bins1, range=bin_range1, color='k', histtype='step', label='Data')
 # This plots the histogram AND saves the counts and bin_edges for later use
 
-plt.xlabel('Particle Energy (keV)')
-plt.ylabel('Number of Events')
+plt.xlabel('Energy Estimator: Pulse Fit(keV)')
+plt.ylabel('Number of events')
 plt.xlim(bin_range1)
 # If the legend covers some data, increase the plt.xlim value, maybe (0,0.5)
 
@@ -173,7 +149,7 @@ plt.errorbar(bin_centers1, n1, yerr=sig1, fmt='none', c='k')
 # This adds errorbars to the histograms, where each uncertainty is sqrt(y)
 
 popt1, pcov1 = curve_fit(myGauss, bin_centers1, n1,
-                         sigma=sig1, p0=(100, 10, 0.02 * c_factor, 5), absolute_sigma=True)
+                         sigma=sig1, p0=(40, 10, 0.2, 5), absolute_sigma=True)
 n1_fit = myGauss(bin_centers1, *popt1)
 """
 n1_fit is our best fit line using our data points.
@@ -192,20 +168,10 @@ y_bestfit1 = myGauss(x_bestfit1, *popt1)
 
 fontsize = 18
 plt.plot(x_bestfit1, y_bestfit1, label='Fit')
-plt.text(8, 50, r'$\mu$ = %3.2f keV' % (popt1[1]), fontsize=fontsize)
-plt.text(8, 40, r'$\sigma$ = %3.2f keV' % (popt1[2]), fontsize=fontsize)
-plt.text(8, 30, r'$\chi^2$/DOF=', fontsize=fontsize)
-plt.text(8, 20, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
-plt.text(8, 10, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
+plt.text(7, 40, r'$\mu$ = %3.2f keV' % (popt1[1]), fontsize=fontsize)
+plt.text(7, 35, r'$\chi^2$/DOF=', fontsize=fontsize)
+plt.text(7, 30, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
+plt.text(7, 25, r'$\sigma$ = %3.2f keV' % (popt1[2]), fontsize=fontsize)
+plt.text(7, 20, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
 plt.legend(loc='upper right')
-plt.savefig("Amp2_post_cal.png")
-uncerts = np.sqrt(np.diag(pcov1))
-print("mu_uncert = " + str(uncerts[1]))
-print("sigma_uncert = " + str(uncerts[2]))
-print("amplitude_uncert = " + str(uncerts[0]))
-print("base_uncert = " + str(uncerts[3]))
-print("amplitude" + str(popt1[0]))
-print("base" + str(popt1[3]))
-
-
 plt.show()

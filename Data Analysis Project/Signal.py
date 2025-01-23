@@ -62,7 +62,6 @@ amp2 = np.zeros(1000)
 for ievt in range(1000):
     current_data = signal_data['evt_%i' % ievt]
     baseline_avg = np.mean(current_data[0:1000])
-    amp2[ievt] = np.max(current_data) - baseline_avg
 
 amp2 *= 1000  # convert from V to mV
 c_factor = 35.62321912581909
