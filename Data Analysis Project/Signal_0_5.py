@@ -105,10 +105,10 @@ plt.show()
 """
 Particle b/w 1 to 5
 """
-sectioned_signal = pulse_fit[(pulse_fit >= noise_range[1]) & (pulse_fit <= 5)]
+sectioned_signal = pulse_fit[(pulse_fit >= noise_range[1]) & (pulse_fit <= 5.5)]
 
-num_bins_sectioned = 40
-bin_range_sectioned = (1.45, max(sectioned_signal))  # Directly specify the range
+num_bins_sectioned = 80
+bin_range_sectioned = (1.3, max(sectioned_signal))  # Directly specify the range
 
 n_sectioned, bin_edges_sectioned, _ = plt.hist(
     sectioned_signal, bins=num_bins_sectioned, range=bin_range_sectioned, color='b', histtype='step', label='Sectioned Data'
@@ -125,7 +125,7 @@ sig_sectioned = np.where(sig_sectioned == 0, 1, sig_sectioned)
 
 # Add error bars
 plt.errorbar(bin_centers_sectioned, n_sectioned, yerr=sig_sectioned, fmt='none', c='k')
-plt.title('Sectioned Signal Data (0 keV to 5 keV)')
+# plt.title('Sectioned Signal Data (0 keV to 5 keV)')
 
 popt, pcov = curve_fit(myGauss, bin_centers_sectioned, n_sectioned, sigma=sig_sectioned,
                        p0=[12, 2.0, 1, min(n_sectioned)], absolute_sigma=True)
@@ -142,10 +142,13 @@ sigma = popt[2]
 chisquared = np.sum(((n_sectioned - myGauss(bin_centers_sectioned, *popt)) / sig_sectioned) ** 2)
 dof = len(bin_centers_sectioned) - len(popt)  # Degrees of freedom
 reduced_chisquared = chisquared / dof
-print("chi_red= ",reduced_chisquared)
-plt.text(bin_range_sectioned[0] + 0.2, max(n_sectioned) * 0.8, r'$\mu$ = {:.2f} keV'.format(mean))
-plt.text(bin_range_sectioned[0] + 0.2, max(n_sectioned) * 0.7, r'$\sigma$ = {:.2f} keV'.format(sigma))
-plt.text(bin_range_sectioned[0] + 0.2, max(n_sectioned) * 0.6, r'$\chi^2$/DOF = {:.2f}'.format(reduced_chisquared))
+print("chi_red= ", reduced_chisquared)
+print("Amp = ", popt[0], "err= ", np.sqrt(pcov[0][0]))
+print("Mean (mu):", mean, "keV" , "err = ", np.sqrt(pcov[1][1]))
+print("Standard Deviation (sigma):", sigma, "keV", np.sqrt(pcov[2][2]))
 
+dof = num_bins_sectioned - len(popt)
+chi_prob = 1 - chi2.cdf(chisquared, dof)
+print("chi_prob= ", chi_prob)
 plt.legend()
 plt.show()

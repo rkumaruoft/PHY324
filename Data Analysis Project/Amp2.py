@@ -113,13 +113,6 @@ plt.errorbar(bin_centers1, n1, yerr=sig1, fmt='none', c='k')
 popt1, pcov1 = curve_fit(myGauss, bin_centers1, n1,
                          sigma=sig1, p0=(70, 0.28, 0.02, 5), absolute_sigma=True)
 n1_fit = myGauss(bin_centers1, *popt1)
-uncerts = np.sqrt(np.diag(pcov1))
-print("mu_uncert = " + str(uncerts[1]))
-print("sigma_uncert = " + str(uncerts[2]))
-print("amplitude_uncert = " + str(uncerts[0]))
-print("base_uncert = " + str(uncerts[3]))
-print("amplitude" + str(popt1[0]))
-print("base" + str(popt1[3]))
 
 """
 n1_fit is our best fit line using our data points.
@@ -138,13 +131,13 @@ y_bestfit1 = myGauss(x_bestfit1, *popt1)
 
 fontsize = 18
 plt.plot(x_bestfit1, y_bestfit1, label='Fit')
-plt.text(0.21, 80, r'$\mu$ = %3.2f mV' % (popt1[1]), fontsize=fontsize)
-plt.text(0.21, 70, r'$\sigma$ = %3.2f mV' % (popt1[2]), fontsize=fontsize)
-plt.text(0.21, 60, r'$\chi^2$/DOF=', fontsize=fontsize)
-plt.text(0.21, 50, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
-plt.text(0.21, 40, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
 plt.legend(loc='upper right')
-plt.savefig("Amp2_pre_cal.png")
+print("Before calibration")
+print(bin_range1)
+print("Amp = ", popt1[0], "err = ", np.sqrt(pcov1[0][0]))
+print("mean = ", popt1[1], "err = ", np.sqrt(pcov1[1][1]))
+print("sigma= ", popt1[2], "err = ", np.sqrt(pcov1[2][2]))
+print("reduces_chi=", chisquared1/dof1)
 plt.show()
 
 """
@@ -191,22 +184,12 @@ x_bestfit1 = np.linspace(bin_edges1[0], bin_edges1[-1], 1000)
 y_bestfit1 = myGauss(x_bestfit1, *popt1)
 # Best fit line smoothed with 1000 datapoints. Don't use best fit lines with 5 or 10 data points!
 
-fontsize = 18
 plt.plot(x_bestfit1, y_bestfit1, label='Fit')
-plt.text(8, 50, r'$\mu$ = %3.2f keV' % (popt1[1]), fontsize=fontsize)
-plt.text(8, 40, r'$\sigma$ = %3.2f keV' % (popt1[2]), fontsize=fontsize)
-plt.text(8, 30, r'$\chi^2$/DOF=', fontsize=fontsize)
-plt.text(8, 20, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
-plt.text(8, 10, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
+print("After calibration")
+print(bin_range1)
+print("Amp = ", popt1[0], "err = ", np.sqrt(pcov1[0][0]))
+print("mean = ", popt1[1], "err = ", np.sqrt(pcov1[1][1]))
+print("sigma= ", popt1[2], "err = ", np.sqrt(pcov1[2][2]))
+print("reduces_chi=", chisquared1/dof1)
 plt.legend(loc='upper right')
-plt.savefig("Amp2_post_cal.png")
-uncerts = np.sqrt(np.diag(pcov1))
-print("mu_uncert = " + str(uncerts[1]))
-print("sigma_uncert = " + str(uncerts[2]))
-print("amplitude_uncert = " + str(uncerts[0]))
-print("base_uncert = " + str(uncerts[3]))
-print("amplitude" + str(popt1[0]))
-print("base" + str(popt1[3]))
-
-print("sigma = ", popt1[2], " error = ", np.sqrt(pcov1[2][2]))
 plt.show()

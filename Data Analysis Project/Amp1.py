@@ -47,7 +47,6 @@ plt.xlabel('Sample Index')
 plt.ylabel('Readout (V)')
 # plt.title('Calibration data (10 sets)')
 plt.legend(loc=1)
-plt.savefig("plots\pulse_template.png")
 plt.show()
 
 """ 
@@ -98,8 +97,8 @@ likely want different values for each estimator.
 n1, bin_edges1, _ = plt.hist(amp1, bins=num_bins1, range=bin_range1, color='k', histtype='step', label='Data')
 # This plots the histogram AND saves the counts and bin_edges for later use
 
-plt.xlabel('Energy Estimator: Maximum Value (mV)')
-plt.ylabel('Events / %2.2f mV' % ((bin_range1[-1] - bin_range1[0]) / num_bins1));
+plt.xlabel('Pulse Amplitude (mV)')
+plt.ylabel('Number of Events')
 plt.xlim(bin_range1)
 # If the legend covers some data, increase the plt.xlim value, maybe (0,0.5)
 
@@ -140,14 +139,13 @@ x_bestfit1 = np.linspace(bin_edges1[0], bin_edges1[-1], 1000)
 y_bestfit1 = myGauss(x_bestfit1, *popt1)
 # Best fit line smoothed with 1000 datapoints. Don't use best fit lines with 5 or 10 data points!
 
-fontsize = 18
 plt.plot(x_bestfit1, y_bestfit1, label='Fit')
-plt.text(0.21, 80, r'$\mu$ = %3.2f mV' % (popt1[1]), fontsize=fontsize)
-plt.text(0.21, 70, r'$\sigma$ = %3.2f mV' % (popt1[2]), fontsize=fontsize)
-plt.text(0.21, 60, r'$\chi^2$/DOF=', fontsize=fontsize)
-plt.text(0.21, 50, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
-plt.text(0.21, 40, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
 plt.legend(loc='upper right')
+print("Before calibration")
+print("Amp = ", popt1[0], "err = ", np.sqrt(pcov1[0][0]))
+print("mean = ", popt1[1], "err = ", np.sqrt(pcov1[1][1]))
+print("sigma= ", popt1[2], "err = ", np.sqrt(pcov1[2][2]))
+print("reduces_chi=", chisquared1/dof1)
 plt.show()
 
 """
@@ -162,8 +160,8 @@ bin_range1 = (0.25 * c_factor, 0.45 * c_factor)
 n1, bin_edges1, _ = plt.hist(amp1, bins=num_bins1, range=bin_range1, color='k', histtype='step', label='Data')
 # This plots the histogram AND saves the counts and bin_edges for later use
 
-plt.xlabel('Energy Estimator: Maximum Value (keV)')
-plt.ylabel('Events / %2.2f mV' % ((bin_range1[-1] - bin_range1[0]) / num_bins1));
+plt.xlabel('Particle Energy (keV)')
+plt.ylabel('Number of Events')
 plt.xlim(bin_range1)
 # If the legend covers some data, increase the plt.xlim value, maybe (0,0.5)
 
@@ -193,45 +191,12 @@ x_bestfit1 = np.linspace(bin_edges1[0], bin_edges1[-1], 1000)
 y_bestfit1 = myGauss(x_bestfit1, *popt1)
 # Best fit line smoothed with 1000 datapoints. Don't use best fit lines with 5 or 10 data points!
 
-fontsize = 9
 plt.plot(x_bestfit1, y_bestfit1, label='Fit')
-plt.text(7.5, 60, r'$\mu$ = %3.2f keV' % (popt1[1]), fontsize=fontsize)
-plt.text(7.5, 50, r'$\sigma$ = %3.2f keV' % (popt1[2]), fontsize=fontsize)
-plt.text(7.5, 40, r'$\chi^2$/DOF=', fontsize=fontsize)
-plt.text(7.5, 30, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
-plt.text(7.5, 20, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
 plt.legend(loc='upper right')
-print("sigma = ", popt1[2], " error = ", np.sqrt(pcov1[2][2]))
+print("After calibration")
+print(bin_range1)
+print("Amp = ", popt1[0], "err = ", np.sqrt(pcov1[0][0]))
+print("mean = ", popt1[1], "err = ", np.sqrt(pcov1[1][1]))
+print("sigma= ", popt1[2], "err = ", np.sqrt(pcov1[2][2]))
+print("reduces_chi=", chisquared1/dof1)
 plt.show()
-
-"""
-This gives us the x-data which are the centres of each bin.
-This is visually better for plotting errorbars.
-More important, it's the correct thing to do for fitting the
-Gaussian to our histogram.
-It also fixes the shape -- len(n1) < len(bin_edges1) so we
-cannot use 
-plt.plot(n1, bin_edges1)
-as it will give us a shape error.
-"""
-
-
-"""
-Look how bad that chi-squared value (and associated probability) is!
-If you look closely, the first 5 data points (on the left) are
-responsible for about half of the chi-squared value. It might be
-worth excluding them from the fit and subsequent plot.
-
-Now your task is to find the calibration factor which converts the
-x-axis of this histogram from mV to keV such that the peak (mu) is 
-by definition at 10 keV. You do this by scaling each estimator (i.e.
-the values of amp1) by a multiplicative constant with units mV / keV.
-Something like:
-
-energy_amp1 = amp1 * conversion_factor1
-
-where you have to find the conversion_factor1 value. Then replot and
-refit the histogram using energy_amp1 instead of amp1. 
-If you do it correctly, the new mu value will be 10 keV, and the new 
-sigma value will be the energy resolution of this energy estimator.
-"""

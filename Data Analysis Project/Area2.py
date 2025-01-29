@@ -71,8 +71,8 @@ likely want different values for each estimator.
 n1, bin_edges1, _ = plt.hist(area2, bins=num_bins1, range=bin_range1, color='k', histtype='step', label='Data')
 # This plots the histogram AND saves the counts and bin_edges for later use
 
-plt.xlabel('Energy Estimator: Area 2(mV)')
-plt.ylabel('Events')
+plt.xlabel('Pulse Amplitude (mV)')
+plt.ylabel('Number of Events')
 plt.xlim(bin_range1)
 # If the legend covers some data, increase the plt.xlim value, maybe (0,0.5)
 
@@ -115,12 +115,12 @@ y_bestfit1 = myGauss(x_bestfit1, *popt1)
 
 fontsize = 18
 plt.plot(x_bestfit1, y_bestfit1, label='Fit')
-plt.text(6, 60, r'$\mu$ = %3.2f mV' % (popt1[1]), fontsize=fontsize)
-plt.text(6, 50, r'$\sigma$ = %3.2f mV' % (popt1[2]), fontsize=fontsize)
-plt.text(6, 40, r'$\chi^2$/DOF=', fontsize=fontsize)
-plt.text(6, 30, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
-plt.text(6, 20, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
 plt.legend(loc='upper right')
+print("Before calibration")
+print("Amp = ", popt1[0], "err = ", np.sqrt(pcov1[0][0]))
+print("mean = ", popt1[1], "err = ", np.sqrt(pcov1[1][1]))
+print("sigma= ", popt1[2], "err = ", np.sqrt(pcov1[2][2]))
+print("reduces_chi=", chisquared1/dof1)
 plt.show()
 
 """
@@ -135,7 +135,7 @@ bin_range1 = (-1 * c_factor, 64.5 * c_factor)
 n1, bin_edges1, _ = plt.hist(area2, bins=num_bins1, range=bin_range1, color='k', histtype='step', label='Data')
 # This plots the histogram AND saves the counts and bin_edges for later use
 
-plt.xlabel('Energy Estimator: Area 2 (keV)')
+plt.xlabel('Particle Energy (keV)')
 plt.ylabel('Number of events')
 plt.xlim(bin_range1)
 # If the legend covers some data, increase the plt.xlim value, maybe (0,0.5)
@@ -168,11 +168,11 @@ y_bestfit1 = myGauss(x_bestfit1, *popt1)
 
 # fontsize = 18
 plt.plot(x_bestfit1, y_bestfit1, label='Fit')
-plt.text(0.8, 50, r'$\mu$ = %3.2f keV' % (popt1[1]), fontsize=fontsize)
-plt.text(0.8, 45, r'$\chi^2$/DOF=', fontsize=fontsize)
-plt.text(0.8, 40, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
-plt.text(0.8, 35, r'$\sigma$ = %3.2f keV' % (popt1[2]), fontsize=fontsize)
-plt.text(0.8, 30, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
 plt.legend(loc='upper right')
-print("sigma = ", popt1[2], " error = ", np.sqrt(pcov1[2][2]))
+print("After calibration")
+print(bin_range1)
+print("Amp = ", popt1[0], "err = ", np.sqrt(pcov1[0][0]))
+print("mean = ", popt1[1], "err = ", np.sqrt(pcov1[1][1]))
+print("sigma= ", popt1[2], "err = ", np.sqrt(pcov1[2][2]))
+print("reduces_chi=", chisquared1/dof1)
 plt.show()

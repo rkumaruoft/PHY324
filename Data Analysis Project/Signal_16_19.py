@@ -1,17 +1,26 @@
 import pickle
 import matplotlib.pyplot as plt
+from matplotlib import rc
 import numpy as np
 from scipy.optimize import curve_fit
+from scipy.stats import chi2
+from scipy.stats import iqr
 
-# Load the signal data from the provided file
-with open("signal.pkl", "rb") as file:
-    signal_data = pickle.load(file)
+font = {'family': 'DejaVu Sans',
+        'weight': 'normal',
+        'size': 10}
+rc('font', **font)
 
-# Define the Gaussian function
+
+# This changes the fonts for all graphs to make them bigger.
+
+
 def myGauss(x, A, mean, width, base):
     return A * np.exp(-(x - mean) ** 2 / (2 * width ** 2)) + base
 
-# Define the pulse shape model
+
+# This is my fitting function, a Guassian with a uniform background.
+
 def pulse_shape(t_rise, t_fall):
     xx = np.linspace(0, 4095, 4096)
     yy = -(np.exp(-(xx - 1000) / t_rise) - np.exp(-(xx - 1000) / t_fall))
@@ -19,99 +28,130 @@ def pulse_shape(t_rise, t_fall):
     yy /= np.max(yy)
     return yy
 
+
 def fit_pulse(x, A):
     _pulse_template = pulse_shape(20, 80)
     xx = np.linspace(0, 4095, 4096)
     return A * np.interp(x, xx, _pulse_template)
 
-# Filter noise and process data
-noise_range = (np.float64(-1.482478806349072), np.float64(1.4844392997804006))
+
+# fit_pulse can be used by curve_fit to fit a pulse to the pulse_shape
+
+with open("signal.pkl", "rb") as file:
+    signal_data = pickle.load(file)
+
+
+# for itrace in range(500,600):
+#     plt.plot(signal_data['evt_%i' % itrace], alpha=0.3)
+# plt.xlabel('Sample Index')
+# plt.ylabel('Readout (V)')
+# plt.title('Signal data (10 sets)')
+# plt.legend(loc=1)
+# plt.show()
+
+
+"""
+This shows the first 10 data sets on top of each other.
+Always a good idea to look at some of your data before analysing it!
+It also plots our pulse template which has been scaled to be slightly
+larger than any of the actual pulses to make it visible.
+"""
+noise_range =  (np.float64(-1.482478806349072), np.float64(1.4844392997804006))
 pulse_fit = np.zeros(1000)
 
+
 for ievt in range(1000):
-    current_data = signal_data[f'evt_{ievt}']
+    current_data = signal_data['evt_%i' % ievt]
     baseline_avg = np.mean(current_data[0:1000])
     data_cleaned = [x - baseline_avg for x in current_data]
     popt, pcov = curve_fit(fit_pulse, range(len(data_cleaned)), data_cleaned)
     pulse_fit[ievt] = popt[0]
 
-# Convert units to keV
+
 pulse_fit *= 1000  # convert from V to mV
 c_factor = 39.03182106539658
-pulse_fit *= c_factor  # convert to keV
+pulse_fit *= c_factor # convert to keV
 
-# Filter data for valid ranges
 pulse_fit = pulse_fit[(pulse_fit < noise_range[0]) | (pulse_fit > noise_range[1])]
 
-# Section the histogram between 15 and 20 keV
-sectioned_signal_15_20 = pulse_fit[(pulse_fit >= 15) & (pulse_fit <= 20)]
+num_bins1 = 60
+bin_range1 = (min(pulse_fit), max(pulse_fit))
+"""
+These two values were picked by trial and error. You'll
+likely want different values for each estimator.
+"""
 
-# Create a histogram for this range
-num_bins_reduced = 20  # Reduced number of bins
-bin_range_15_20 = (min(sectioned_signal_15_20), max(sectioned_signal_15_20))
-n_15_20_reduced, bin_edges_15_20_reduced, _ = plt.hist(
-    sectioned_signal_15_20, bins=num_bins_reduced, range=bin_range_15_20,
-    color='b', histtype='step', label='Original Histogram (15-20 keV)'
-)
+n1, bin_edges1, _ = plt.hist(pulse_fit, bins=num_bins1, range=bin_range1, color='k', histtype='step', label='Data')
+# This plots the histogram AND saves the counts and bin_edges for later use
 
-# Calculate bin centers and uncertainties
-bin_centers_15_20_reduced = 0.5 * (bin_edges_15_20_reduced[1:] + bin_edges_15_20_reduced[:-1])
-sig_15_20_reduced = np.sqrt(n_15_20_reduced)
-sig_15_20_reduced = np.where(sig_15_20_reduced == 0, 1, sig_15_20_reduced)
-
-# Extend the histogram range by adding zeros before 15 keV and after 20 keV
-extended_bin_centers = np.concatenate((
-    [bin_centers_15_20_reduced[0] - 0.5],
-    bin_centers_15_20_reduced,
-    [bin_centers_15_20_reduced[-1] + 0.5]
-))
-
-extended_counts = np.concatenate((
-    [0],  # Add zero counts before
-    n_15_20_reduced,
-    [0]  # Add zero counts after
-))
-
-extended_errors = np.concatenate((
-    [1],  # Error on the zero counts (set to 1)
-    sig_15_20_reduced,
-    [1]  # Error on the zero counts (set to 1)
-))
-
-# Fit a single Gaussian to the extended data
-popt_gauss_extended, pcov_gauss_extended = curve_fit(
-    myGauss, extended_bin_centers, extended_counts,
-    sigma=extended_errors,
-    p0=[max(extended_counts), 17.5, 0.5, 0],  # Initial guesses for A, mean, width, base
-    absolute_sigma=True
-)
-
-# Calculate the fitted Gaussian curve
-x_bestfit_gauss_extended = np.linspace(min(extended_bin_centers), max(extended_bin_centers), 1000)
-y_bestfit_gauss_extended = myGauss(x_bestfit_gauss_extended, *popt_gauss_extended)
-
-# Plot the extended histogram with the Gaussian fit
-plt.hist(sectioned_signal_15_20, bins=num_bins_reduced, range=bin_range_15_20,
-         color='b', histtype='step')
-plt.errorbar(extended_bin_centers, extended_counts, yerr=extended_errors, fmt='none', c='k',)
-plt.plot(x_bestfit_gauss_extended, y_bestfit_gauss_extended, label='Gaussian Fit', color='r')
-
-# Extract Gaussian parameters
-A_gauss_ext, mean_gauss_ext, sigma_gauss_ext, base_gauss_ext = popt_gauss_extended
-chisquared_gauss_ext = np.sum(
-    ((extended_counts - myGauss(extended_bin_centers, *popt_gauss_extended)) / extended_errors) ** 2
-)
-dof_gauss_ext = len(extended_counts) - len(popt_gauss_extended)
-reduced_chisquared_gauss_ext = chisquared_gauss_ext / dof_gauss_ext
-
-# Annotate the plot with fit parameters
-plt.text(min(extended_bin_centers) + 0.5, max(extended_counts) * 0.8, r'A = {:.2f}'.format(A_gauss_ext))
-plt.text(min(extended_bin_centers) + 0.5, max(extended_counts) * 0.7, r'$\mu$ = {:.2f} keV'.format(mean_gauss_ext))
-plt.text(min(extended_bin_centers) + 0.5, max(extended_counts) * 0.6, r'$\sigma$ = {:.2f} keV'.format(sigma_gauss_ext))
-plt.text(min(extended_bin_centers) + 0.5, max(extended_counts) * 0.5, r'$\chi^2$/DOF = {:.2f}'.format(reduced_chisquared_gauss_ext))
 
 plt.xlabel('Particle Energy (keV)')
 plt.ylabel('Number of Events')
-plt.title('Gaussian Fit to Extended Sectioned Data (15-20 keV)')
+plt.xlim(bin_range1)
+
+bin_centers1 = 0.5 * (bin_edges1[1:] + bin_edges1[:-1])
+# If the legend covers some data, increase the plt.xlim value, maybe (0,0.5)
+
+sig1 = np.sqrt(n1)
+sig1 = np.where(sig1 == 0, 1, sig1)
+# The uncertainty on 0 count is 1, not 0. Replace all 0s with 1s.
+
+plt.errorbar(bin_centers1, n1, yerr=sig1, fmt='none', c='k')
+# This adds errorbars to the histograms, where each uncertainty is sqrt(y)
+plt.show()
+
+
+
+"""
+Particle b/w 1 to 5
+"""
+sectioned_signal = pulse_fit[(pulse_fit >= 15) & (pulse_fit <= 20)]
+
+num_bins_sectioned = 20
+bin_range_sectioned = (min(sectioned_signal) - 2, max(sectioned_signal) + 2)  # Directly specify the range
+
+
+n_sectioned, bin_edges_sectioned, _ = plt.hist(
+    sectioned_signal, bins=num_bins_sectioned, range=bin_range_sectioned, color='b', histtype='step', label='Sectioned Data'
+)
+
+plt.xlabel('Particle Energy (keV)')
+plt.ylabel('Number of Events')
+plt.xlim(bin_range_sectioned)
+
+# Calculate bin centers and uncertainties
+bin_centers_sectioned = 0.5 * (bin_edges_sectioned[1:] + bin_edges_sectioned[:-1])
+sig_sectioned = np.sqrt(n_sectioned)
+sig_sectioned = np.where(sig_sectioned == 0, 1, sig_sectioned)
+
+# Add error bars
+plt.errorbar(bin_centers_sectioned, n_sectioned, yerr=sig_sectioned, fmt='none', c='k')
+# plt.title('Sectioned Signal Data (0 keV to 5 keV)')
+
+bounds = ([0, 17, 0, 0], [np.inf, 18, np.inf, np.inf])  # Positive amplitude and width
+
+popt, pcov = curve_fit(myGauss, bin_centers_sectioned, n_sectioned, sigma=sig_sectioned,
+                       p0=[max(n_sectioned), 17, 5, min(n_sectioned)],bounds=bounds, absolute_sigma=True)
+
+# Calculate the fitted Gaussian curve
+x_bestfit = np.linspace(bin_range_sectioned[0], bin_range_sectioned[1], 1000)
+y_bestfit = myGauss(x_bestfit, *popt)
+
+plt.plot(x_bestfit, y_bestfit, label="Fit Line", color='r')
+
+# Annotate the Gaussian parameters
+mean = popt[1]
+sigma = popt[2]
+chisquared = np.sum(((n_sectioned - myGauss(bin_centers_sectioned, *popt)) / sig_sectioned) ** 2)
+dof = len(bin_centers_sectioned) - len(popt)  # Degrees of freedom
+reduced_chisquared = chisquared / dof
+print("chi_red= ", reduced_chisquared)
+print("Amp = ", popt[0], "err= ", np.sqrt(pcov[0][0]))
+print("Mean (mu):", mean, "keV" , "err = ", np.sqrt(pcov[1][1]))
+print("Standard Deviation (sigma):", sigma, "keV", np.sqrt(pcov[2][2]))
+
+dof = num_bins_sectioned - len(popt)
+chi_prob = 1 - chi2.cdf(chisquared, dof)
+print("chi_prob= ", chi_prob)
 plt.legend()
 plt.show()
