@@ -175,4 +175,6 @@ print("Amp = ", popt1[0], "err = ", np.sqrt(pcov1[0][0]))
 print("mean = ", popt1[1], "err = ", np.sqrt(pcov1[1][1]))
 print("sigma= ", popt1[2], "err = ", np.sqrt(pcov1[2][2]))
 print("reduces_chi=", chisquared1/dof1)
+
+
 plt.show()

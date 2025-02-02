@@ -6,7 +6,7 @@ import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import chi2
 import csv
-
+from error_propogation import *
 
 def Gauss(x, A, mean, width, base):
     return A * np.exp(-(x - mean) ** 2 / (2 * width ** 2)) + base
@@ -93,3 +93,22 @@ spectrum_peak_at = popt[1]
 print("Spectrum Peak mean = ", spectrum_peak_at)
 print("Peak wavelength = ", np.sqrt(theta_to_lambda2(spectrum_peak_at, 13900, 1.689)), "nm")
 plt.show()
+
+plt.scatter(peak_angle_sec, peak_intensity_sec, marker=1)
+
+from error_propogation import *
+
+popt, pcov = curve_fit(Gauss, peak_angle_sec, peak_intensity_sec, p0=(0.43, 57, 1, 0.05))
+plt.plot(peak_angle_sec, Gauss(np.array(peak_angle_sec), *popt))
+plt.title("spectrum peak")
+plt.xlabel("Angle (degrees)")
+plt.ylabel("Intensity")
+spectrum_peak_at = popt[1]
+spectrum_peak_err = np.sqrt(pcov[1][1])
+peak_wavelength = np.sqrt(theta_to_lambda2(spectrum_peak_at, 13900, 1.689))
+error_in_peak = error_in_lambda(compute_lambda2_error(spectrum_peak_at, spectrum_peak_err, 13900, 1.689),
+                                peak_wavelength)
+print("Spectrum Peak mean = ", spectrum_peak_at, "err = ", spectrum_peak_err)
+print("Peak wavelength = ", peak_wavelength, " nm", "err", error_in_peak)
+plt.show()
+

@@ -14,8 +14,8 @@ def calculate_temperature(voltage, current, Resist_0, Temp_0, alpha0):
     Temp = Temp_0 + ((R / Resist_0) - 1) / alpha0
     return Temp
 
-def weinz_law(x, A, C):
-    return (A / (x)) + C
+def weinz_law(x, A, B, C):
+    return (A / (x + B)) + C
 
 def d_lambda2_d_theta(theta_angle, A, B):
     theta_rad = np.radians(theta_angle)  # Convert degrees to radians
@@ -87,8 +87,13 @@ if __name__ == "__main__":
     for i in range(len(avg_lambda_errors)):
         print(avg_lambdas[i], " ", avg_lambda_errors[i])
 
-    avg_temps = np.array(avg_temps)
-    avg_lambdas = np.array(avg_lambdas)
+    avg_temps = np.array(temps)
+    avg_lambdas = np.array(lambda_max)
+    avg_lambda_errors = np.array(lambda_error)
+
+    for i in range(len(avg_lambda_errors)):
+        print(avg_lambdas[i], " ", avg_lambda_errors[i])
+
     plt.errorbar(avg_temps, avg_lambdas,yerr=avg_lambda_errors, fmt='.', c='k', label="Data")
     plt.ylabel("Wavelength")
     plt.xlabel("Temperature")
@@ -101,7 +106,7 @@ if __name__ == "__main__":
     """For al the temps"""
     new_temps = np.array(range(2400,3500))
     y1 = weinz_law(new_temps, *popt)
-    plt.plot(new_temps, y1, label="Fit curve1", linestyle='dashed')
+    plt.plot(new_temps, y1, label="Fit curve1")
 
     plt.legend()
     plt.show()
