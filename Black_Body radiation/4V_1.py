@@ -9,11 +9,11 @@ import csv
 
 
 def Gauss(x, A, mean, width, base):
-    return A * np.exp(-(x-mean)**2/(2*width**2)) + base
+    return A * np.exp(-(x - mean) ** 2 / (2 * width ** 2)) + base
 
 
 def theta_to_lambda2(theta_angle, A, B):
-    n_2 = ((((2 / math.sqrt(3)) * math.sin(np.radians(theta_angle))) + (1 / 2))  ** 2) + 3 / 4
+    n_2 = ((((2 / math.sqrt(3)) * math.sin(np.radians(theta_angle))) + (1 / 2)) ** 2) + 3 / 4
     return A / ((np.sqrt(n_2)) - B)
 
 
@@ -29,7 +29,6 @@ with open('data/data_IN_csv/4V_1.csv', mode='r') as file:
     for row in csv_reader:
         angle.append(float(row[0]))
         intensity.append(float(row[1]))
-        wavelength.append(theta_to_lambda2(float(row[0]), 13900, 1.3))
 
 small_angle_sec = []
 small_intensity_sec = []
@@ -37,8 +36,6 @@ for i in range(len(angle)):
     if 76 <= angle[i] <= 82:
         small_angle_sec.append(angle[i])
         small_intensity_sec.append(intensity[i])
-
-
 
 plt.scatter(small_angle_sec, small_intensity_sec, marker=2)
 # Convert data to numpy arrays for curve fitting
@@ -60,7 +57,8 @@ plt.xlabel("Angle (degrees)")
 plt.ylabel("Intensity")
 plt.legend()
 small_peak_at = popt[1]
-print("Small Peak mean = ", small_peak_at)
+small_peak_err = np.sqrt(pcov[1][1])
+print("Small Peak mean = ", small_peak_at, "error = ", small_peak_err)
 plt.show()
 
 theta_init = small_peak_at
@@ -79,16 +77,17 @@ for i in range(len(angle)):
         peak_angle_sec.append(angle[i])
         peak_intensity_sec.append(intensity[i])
 
-plt.scatter(peak_angle_sec, peak_intensity_sec, marker=2)
 
+plt.scatter(peak_angle_sec, peak_intensity_sec, marker=1)
 
 popt, pcov = curve_fit(Gauss, peak_angle_sec, peak_intensity_sec, p0=(0.43, 57, 1, 0.05))
-plt.plot(peak_angle_sec, Gauss(peak_angle_sec, *popt))
+plt.plot(peak_angle_sec, Gauss(np.array(peak_angle_sec), *popt))
 plt.title("spectrum peak")
 plt.xlabel("Angle (degrees)")
 plt.ylabel("Intensity")
 spectrum_peak_at = popt[1]
-print("Spectrum Peak mean = ", spectrum_peak_at)
+spectrum_peak_err = np.sqrt(pcov[1][1])
+print("Spectrum Peak mean = ", spectrum_peak_at, "err = ", spectrum_peak_err)
 # plt.axvline(x=spectrum_peak_at)
 print("Peak wavelength = ", np.sqrt(theta_to_lambda2(spectrum_peak_at, 13900, 1.689)), "nm")
 plt.show()
