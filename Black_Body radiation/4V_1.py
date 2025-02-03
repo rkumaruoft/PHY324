@@ -30,6 +30,12 @@ with open('data/data_IN_csv/4V_1.csv', mode='r') as file:
         angle.append(float(row[0]))
         intensity.append(float(row[1]))
 
+plt.xlabel("Sensor Position (Degrees)")
+plt.ylabel("Intensity (Volts)")
+plt.scatter(angle, intensity, label="Raw data", s=2)
+plt.legend()
+plt.show()
+
 small_angle_sec = []
 small_intensity_sec = []
 for i in range(len(angle)):
@@ -37,7 +43,7 @@ for i in range(len(angle)):
         small_angle_sec.append(angle[i])
         small_intensity_sec.append(intensity[i])
 
-plt.scatter(small_angle_sec, small_intensity_sec, marker=2)
+plt.scatter(small_angle_sec, small_intensity_sec, s=2, label="Small Peak data")
 # Convert data to numpy arrays for curve fitting
 x_data = np.array(small_angle_sec)
 y_data = np.array(small_intensity_sec)
@@ -48,17 +54,27 @@ initial_guess = [max(y_data), np.mean(x_data), 1, 0.03]
 # Fit the Gaussian model to the data
 popt, pcov = curve_fit(Gauss, x_data, y_data, p0=initial_guess)
 
+small_angle_sec = np.array(small_angle_sec)
 y_fit = Gauss(small_angle_sec, *popt)
 
 # Plot the data and the Gaussian fit
-plt.plot(small_angle_sec, y_fit, '-', label=f'Gaussian Fit', linewidth=2)
-plt.title("Small Peak")
-plt.xlabel("Angle (degrees)")
-plt.ylabel("Intensity")
+plt.plot(small_angle_sec, y_fit, '-', label=f'Gaussian Fit', linewidth=2, color="red")
+plt.xlabel("Sensor Position (degrees)")
+plt.ylabel("Intensity (Volts)")
 plt.legend()
 small_peak_at = popt[1]
 small_peak_err = np.sqrt(pcov[1][1])
 print("Small Peak mean = ", small_peak_at, "error = ", small_peak_err)
+plt.savefig("Graphs/4V Small_Peak.png", dpi=200)
+plt.show()
+
+"""Residual for small peak fit"""
+residuals_small_peak = y_data - y_fit
+plt.scatter(small_angle_sec, residuals_small_peak, label='Residuals', s=2)
+plt.xlabel("Sensor Position (degrees)")
+plt.ylabel("Intensity Residuals (Volts)")
+plt.axhline(y=0)
+plt.legend()
 plt.show()
 
 theta_init = small_peak_at
@@ -66,8 +82,11 @@ angle = np.array(angle) - theta_init
 
 angle = -angle
 
-plt.title("Angle vs Intensity")
-plt.plot(angle, intensity)
+plt.scatter(angle, intensity, label="Raw Data Calibrated", s=2)
+plt.xlabel("Theta (degrees)")
+plt.ylabel("Intensity (Volts)")
+plt.legend()
+plt.savefig("Graphs/4V raw_calibrated.png", dpi=200)
 plt.show()
 
 peak_angle_sec = []
@@ -78,20 +97,30 @@ for i in range(len(angle)):
         peak_intensity_sec.append(intensity[i])
 
 
-plt.scatter(peak_angle_sec, peak_intensity_sec, marker=1)
+plt.scatter(peak_angle_sec, peak_intensity_sec, s=2, label="Data")
 
 from error_propogation import *
 
 popt, pcov = curve_fit(Gauss, peak_angle_sec, peak_intensity_sec, p0=(0.43, 57, 1, 0.05))
-plt.plot(peak_angle_sec, Gauss(np.array(peak_angle_sec), *popt))
-plt.title("spectrum peak")
-plt.xlabel("Angle (degrees)")
-plt.ylabel("Intensity")
+fit_data = Gauss(np.array(peak_angle_sec), *popt)
+plt.plot(peak_angle_sec, fit_data, label="Gaussian Fit")
+plt.xlabel("Theta (Degrees)")
+plt.ylabel("Intensity (Volts)")
 spectrum_peak_at = popt[1]
 spectrum_peak_err = np.sqrt(pcov[1][1])
 peak_wavelength = np.sqrt(theta_to_lambda2(spectrum_peak_at, 13900, 1.689))
 error_in_peak = error_in_lambda(compute_lambda2_error(spectrum_peak_at, spectrum_peak_err, 13900, 1.689),
                                 peak_wavelength)
 print("Spectrum Peak mean = ", spectrum_peak_at, "err = ", spectrum_peak_err)
-print("Peak wavelength = ", peak_wavelength, " nm", "err", error_in_peak)
+print("Peak wavelength = ", peak_wavelength, " nm", "err = ", error_in_peak)
+plt.legend()
+plt.show()
+
+"""Residual for small peak fit"""
+residuals_big_peak = peak_intensity_sec - fit_data
+plt.scatter(peak_angle_sec, residuals_big_peak, label='Residuals', s=2)
+plt.xlabel("Theta (degrees)")
+plt.ylabel("Intensity Residuals (Volts)")
+plt.axhline(y=0)
+plt.legend()
 plt.show()

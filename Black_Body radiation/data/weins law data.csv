@@ -1,4 +1,4 @@
-Voltage_File (V),Voltage,Wavelength _Max (nm),T_0 (K),T_0 uncert (K),Current (A),Wavelength_err (nm)
+Voltage Index,Voltage (V),Wavelength Max (nm),T_0 (K),T_0 error (K),Current (A),Wavelength Error (nm)
 4_1,4,968.0523567,298.35,0.1,0.34,59.49034475
 4_2,4,914.0044848,298.45,0.1,0.339,51.57816364
 4_3,4,973.9046188,298.25,0.1,0.34,73.7871759

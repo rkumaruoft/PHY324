@@ -9,13 +9,16 @@ from scipy.optimize import curve_fit
 from scipy.stats import chi2
 import csv
 
+
 def calculate_temperature(voltage, current, Resist_0, Temp_0, alpha0):
     R = voltage / current
     Temp = Temp_0 + ((R / Resist_0) - 1) / alpha0
     return Temp
 
+
 def weinz_law(x, A, C):
-    return (A / (x)) + C
+    return (A / x) + C
+
 
 def d_lambda2_d_theta(theta_angle, A, B):
     theta_rad = np.radians(theta_angle)  # Convert degrees to radians
@@ -31,12 +34,12 @@ def d_lambda2_d_theta(theta_angle, A, B):
 
     return d_lambda2
 
+
 # Define function to compute error propagation
 def compute_lambda2_error(theta_values, theta_errors, A, B):
     d_lambda2_vals = d_lambda2_d_theta(theta_values, A, B)
     lambda2_errors = np.abs(d_lambda2_vals) * theta_errors  # Propagate error using absolute derivative
     return lambda2_errors
-
 
 
 if __name__ == "__main__":
@@ -60,9 +63,8 @@ if __name__ == "__main__":
 
     temps = []
     for i in range(len(temp_0)):
-        this_temp = calculate_temperature(voltage[i], current[i], 1.1, 293, 4.5 * (10**-3))
+        this_temp = calculate_temperature(voltage[i], current[i], 1.1, 293, 4.5 * (10 ** -3))
         temps.append(this_temp)
-
 
     avg_lambdas = []
     avg_temps = []
@@ -80,7 +82,7 @@ if __name__ == "__main__":
             index += 1
         avg_lambdas.append(sum(this_avg_lambda) / len(this_avg_lambda))
         avg_temps.append(sum(this_avg_temp) / len(this_avg_temp))
-        avg_lambda_errors.append(np.sqrt(sum([x**2 for x in this_errors])) / 3) #using uncertainty propagation
+        avg_lambda_errors.append(np.sqrt(sum([x ** 2 for x in this_errors])) / 3)  # using uncertainty propagation
         # avg_lambda_errors.append(max(this_avg_lambda) - min(this_avg_lambda))
         # avg_lambda_errors.append(13.6)
 
@@ -89,7 +91,7 @@ if __name__ == "__main__":
 
     avg_temps = np.array(avg_temps)
     avg_lambdas = np.array(avg_lambdas)
-    plt.errorbar(avg_temps, avg_lambdas,yerr=avg_lambda_errors, fmt='.', c='k', label="Data")
+    plt.errorbar(avg_temps, avg_lambdas, yerr=avg_lambda_errors, fmt='.', c='k', label="Data")
     plt.ylabel("Wavelength")
     plt.xlabel("Temperature")
 
@@ -99,7 +101,7 @@ if __name__ == "__main__":
     plt.plot(avg_temps, y_data, label="Fit curve")
 
     """For al the temps"""
-    new_temps = np.array(range(2400,3500))
+    new_temps = np.array(range(2400, 3500))
     y1 = weinz_law(new_temps, *popt)
     plt.plot(new_temps, y1, label="Fit curve1", linestyle='dashed')
 
@@ -109,8 +111,6 @@ if __name__ == "__main__":
     residuals = avg_lambdas - y_data
     plt.errorbar(avg_temps, residuals, yerr=avg_lambda_errors, fmt='.', c="r")
     plt.axhline(y=0)
-
-
 
     # Compute chi-squared statistic
     chi_squared = np.sum(((avg_lambdas - y_data) / avg_lambda_errors) ** 2)
@@ -126,6 +126,4 @@ if __name__ == "__main__":
     # Print result
     print(f"Reduced Chi-Squared: {reduced_chi_squared:.2f}")
 
-
     plt.show()
-
