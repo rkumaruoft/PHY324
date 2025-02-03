@@ -97,13 +97,14 @@ for i in range(len(angle)):
         peak_intensity_sec.append(intensity[i])
 
 
-plt.scatter(peak_angle_sec, peak_intensity_sec, s=2, label="Data")
+plt.scatter(peak_angle_sec, peak_intensity_sec, s=2, label="Calibrated Data")
 
 from error_propogation import *
 
 popt, pcov = curve_fit(Gauss, peak_angle_sec, peak_intensity_sec, p0=(0.43, 57, 1, 0.05))
+
 fit_data = Gauss(np.array(peak_angle_sec), *popt)
-plt.plot(peak_angle_sec, fit_data, label="Gaussian Fit")
+plt.plot(peak_angle_sec, fit_data, label="Gaussian Fit", c='k')
 plt.xlabel("Theta (Degrees)")
 plt.ylabel("Intensity (Volts)")
 spectrum_peak_at = popt[1]
@@ -114,6 +115,7 @@ error_in_peak = error_in_lambda(compute_lambda2_error(spectrum_peak_at, spectrum
 print("Spectrum Peak mean = ", spectrum_peak_at, "err = ", spectrum_peak_err)
 print("Peak wavelength = ", peak_wavelength, " nm", "err = ", error_in_peak)
 plt.legend()
+plt.savefig("Graphs/4V spectrum_peak.png", dpi=200)
 plt.show()
 
 """Residual for small peak fit"""
