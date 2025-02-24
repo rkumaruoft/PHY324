@@ -57,12 +57,12 @@ plt.legend()
 # Print results
 mean = popt[1]
 sigma = popt[2]
-noise_range = (mean - 2 * sigma, mean + 2 * sigma)
+noise_range = (mean - (3 * sigma), mean + (3 * sigma))
 print("Histogram of Raw Noise Fluctuations (in keV):")
 print("Amp = ", popt[0], "err= ", np.sqrt(pcov[0][0]))
 print("Mean (mu):", mean, "keV" , "err = ", np.sqrt(pcov[1][1]))
 print("Standard Deviation (sigma):", sigma, "keV", np.sqrt(pcov[2][2]))
-print("Noise Range (mu ± 2σ):", noise_range)
+print("Noise Range (mu ± 3σ):", noise_range)
 
 # Calculate chi-squared
 n1_fit = myGauss(bin_centers, *popt)  # Gaussian fit values
@@ -76,5 +76,19 @@ chi_prob = 1 - chi2.cdf(chisquared, dof)
 print("chi_prob= ", chi_prob)
 
 # Save and show the plot
-plt.savefig("plots/histogram_raw_noise_fluctuations_keV.png")
+plt.savefig("plots/histogram_raw_noise_fluctuations_keV.png", dpi=200)
+plt.show()
+
+
+"""Residuals"""
+# Compute residuals for the Gaussian fit after calibration
+residuals = n - myGauss(bin_centers, *popt)
+
+# Plot the residuals with black markers and error bars using '.' marker format
+plt.axhline(0, color='black', linestyle='--', linewidth=1)
+plt.errorbar(bin_centers, residuals, yerr=sig, fmt='.k', label='Residuals')
+plt.xlabel('Particle Energy (keV)')
+plt.ylabel('Residuals')
+plt.legend()
+plt.savefig("new_plots/noise_residuals", dpi=200)
 plt.show()

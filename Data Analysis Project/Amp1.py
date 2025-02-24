@@ -7,7 +7,7 @@ from scipy.stats import chi2
 
 font = {'family': 'DejaVu Sans',
         'weight': 'normal',
-        'size': 10}
+        'size': 12}
 rc('font', **font)
 
 
@@ -199,4 +199,17 @@ print("Amp = ", popt1[0], "err = ", np.sqrt(pcov1[0][0]))
 print("mean = ", popt1[1], "err = ", np.sqrt(pcov1[1][1]))
 print("sigma= ", popt1[2], "err = ", np.sqrt(pcov1[2][2]))
 print("reduces_chi=", chisquared1/dof1)
+plt.show()
+
+"""Residuals"""
+# Compute residuals for the Gaussian fit after calibration
+residuals = n1 - myGauss(bin_centers1, *popt1)
+
+# Plot the residuals with black markers and error bars using '.' marker format
+plt.axhline(0, color='black', linestyle='--', linewidth=1)
+plt.errorbar(bin_centers1, residuals, yerr=sig1, fmt='.k', label='Residuals')
+plt.xlabel('Particle Energy (keV)')
+plt.ylabel('Residuals')
+plt.legend()
+plt.savefig("new_plots/amp1_residuals", dpi=200)
 plt.show()

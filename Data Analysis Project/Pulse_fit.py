@@ -7,7 +7,7 @@ from scipy.stats import chi2
 
 font = {'family': 'DejaVu Sans',
         'weight': 'normal',
-        'size': 10}
+        'size': 12}
 rc('font', **font)
 
 
@@ -167,8 +167,6 @@ dof1 = num_bins1 - len(popt1)
 x_bestfit1 = np.linspace(bin_edges1[0], bin_edges1[-1], 1000)
 y_bestfit1 = myGauss(x_bestfit1, *popt1)
 # Best fit line smoothed with 1000 datapoints. Don't use best fit lines with 5 or 10 data points!
-
-fontsize = 18
 plt.plot(x_bestfit1, y_bestfit1, label='Fit')
 print("After calibration")
 print(bin_range1)
@@ -177,4 +175,17 @@ print("mean = ", popt1[1], "err = ", np.sqrt(pcov1[1][1]))
 print("sigma= ", popt1[2], "err = ", np.sqrt(pcov1[2][2]))
 print("reduces_chi=", chisquared1/dof1)
 plt.legend(loc='upper right')
+plt.show()
+
+"""Residuals"""
+# Compute residuals for the Gaussian fit after calibration
+residuals = n1 - myGauss(bin_centers1, *popt1)
+
+# Plot the residuals with black markers and error bars using '.' marker format
+plt.axhline(0, color='black', linestyle='--', linewidth=1)
+plt.errorbar(bin_centers1, residuals, yerr=sig1, fmt='.k', label='Residuals')
+plt.xlabel('Particle Energy (keV)')
+plt.ylabel('Residuals')
+plt.legend()
+plt.savefig("new_plots/pulse_residuals", dpi=200)
 plt.show()

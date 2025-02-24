@@ -8,7 +8,7 @@ from scipy.stats import iqr
 
 font = {'family': 'DejaVu Sans',
         'weight': 'normal',
-        'size': 10}
+        'size': 12}
 rc('font', **font)
 
 
@@ -34,7 +34,8 @@ def fit_pulse(x, A):
     xx = np.linspace(0, 4095, 4096)
     return A * np.interp(x, xx, _pulse_template)
 
-
+def decay_function(t, tau, A, B):
+    return (A * np.exp(-t / tau)) + B
 # fit_pulse can be used by curve_fit to fit a pulse to the pulse_shape
 
 with open("signal.pkl", "rb") as file:
@@ -56,7 +57,7 @@ Always a good idea to look at some of your data before analysing it!
 It also plots our pulse template which has been scaled to be slightly
 larger than any of the actual pulses to make it visible.
 """
-noise_range =  (np.float64(-1.482478806349072), np.float64(1.4844392997804006))
+noise_range =  (np.float64(-2.22420833288144), np.float64(2.2261688263127684))
 pulse_fit = np.zeros(1000)
 
 
@@ -74,7 +75,7 @@ pulse_fit *= c_factor # convert to keV
 
 pulse_fit = pulse_fit[(pulse_fit < noise_range[0]) | (pulse_fit > noise_range[1])]
 
-num_bins1 = 150
+num_bins1 = 60
 bin_range1 = (min(pulse_fit), max(pulse_fit))
 print(bin_range1)
 """

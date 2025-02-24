@@ -7,7 +7,7 @@ from scipy.stats import chi2
 
 font = {'family': 'DejaVu Sans',
         'weight': 'normal',
-        'size': 10}
+        'size': 12}
 rc('font', **font)
 
 
@@ -174,13 +174,12 @@ x_bestfit1 = np.linspace(bin_edges1[0], bin_edges1[-1], 1000)
 y_bestfit1 = myGauss(x_bestfit1, *popt1)
 # Best fit line smoothed with 1000 datapoints. Don't use best fit lines with 5 or 10 data points!
 
-fontsize = 18
 plt.plot(x_bestfit1, y_bestfit1, label='Fit')
-# plt.text(9, 40, r'$\mu$ = %3.2f keV' % (popt1[1]), fontsize=fontsize)
-# plt.text(9, 35, r'$\chi^2$/DOF=', fontsize=fontsize)
-# plt.text(9, 30, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
-# plt.text(9, 25, r'$\sigma$ = %3.2f keV' % (popt1[2]), fontsize=fontsize)
-# plt.text(9, 20, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
+plt.text(9.1, 60, r'$\mu$ = %3.2f keV' % (popt1[1]), fontsize=fontsize)
+plt.text(9.1, 55, r'$\chi^2$/DOF=', fontsize=fontsize)
+plt.text(9.1, 50, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
+plt.text(9.1, 45, r'$\sigma$ = %3.2f keV' % (popt1[2]), fontsize=fontsize)
+plt.text(9.1, 40, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
 plt.legend(loc='upper right')
 print("After calibration")
 print("Amp = ", popt1[0], "err = ", np.sqrt(pcov1[0][0]))
