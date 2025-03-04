@@ -34,13 +34,30 @@ def d_lambda2_d_theta(theta_angle, A, B):
 
     return d_lambda2
 
-
 # Define function to compute error propagation
 def compute_lambda2_error(theta_values, theta_errors, A, B):
     d_lambda2_vals = d_lambda2_d_theta(theta_values, A, B)
     lambda2_errors = np.abs(d_lambda2_vals) * theta_errors  # Propagate error using absolute derivative
     return lambda2_errors
 
+
+def uncertainty_in_average(values, uncertainties):
+    """
+    Calculate the uncertainty in the average of given values with uncertainties.
+
+    Parameters:
+        values (list or np.array): The measured values (not used in calculation, but kept for structure).
+        uncertainties (list or np.array): The uncertainties associated with each value.
+
+    Returns:
+        float: The uncertainty in the average.
+    """
+    uncertainties = np.array(uncertainties)
+
+    if np.all(uncertainties == uncertainties[0]):  # All uncertainties are the same
+        return uncertainties[0] / np.sqrt(len(values))
+    else:  # Different uncertainties
+        return np.sqrt(1 / np.sum(1 / uncertainties ** 2))
 
 if __name__ == "__main__":
     voltage = []
@@ -82,9 +99,10 @@ if __name__ == "__main__":
             index += 1
         avg_lambdas.append(sum(this_avg_lambda) / len(this_avg_lambda))
         avg_temps.append(sum(this_avg_temp) / len(this_avg_temp))
-        avg_lambda_errors.append(np.sqrt(sum([x ** 2 for x in this_errors])) / 3)  # using uncertainty propagation
+        # using uncertainty propagation for average
+        avg_lambda_errors.append(uncertainty_in_average(this_avg_lambda, this_errors))
         # avg_lambda_errors.append(max(this_avg_lambda) - min(this_avg_lambda))
-        # avg_lambda_errors.append(13.6)
+        # avg_lambda_errors.append(23.6)
 
     for i in range(len(avg_lambda_errors)):
         print(avg_lambdas[i], " ", avg_lambda_errors[i])
@@ -92,20 +110,24 @@ if __name__ == "__main__":
     avg_temps = np.array(avg_temps)
     avg_lambdas = np.array(avg_lambdas)
     plt.errorbar(avg_temps, avg_lambdas, yerr=avg_lambda_errors, fmt='.', c='k', label="Data")
-    plt.ylabel("Wavelength")
-    plt.xlabel("Temperature")
+    plt.ylabel("Wavelength (nm)")
+    plt.xlabel("Temperature (K)")
 
     popt, pcov = curve_fit(weinz_law, xdata=avg_temps, ydata=avg_lambdas, sigma=avg_lambda_errors)
-    print("popt ", popt)
+    print(popt)
+    print(pcov)
+    print("A =  ", popt[0], "err", np.sqrt(pcov[0][0]))
+    print("B =  ", popt[1], "err", np.sqrt(pcov[1][1]))
     y_data = weinz_law(avg_temps, *popt)
-    plt.plot(avg_temps, y_data, label="Fit curve")
+    # plt.plot(avg_temps, y_data, label="Fit curve")
 
     """For al the temps"""
     new_temps = np.array(range(2400, 3500))
     y1 = weinz_law(new_temps, *popt)
-    plt.plot(new_temps, y1, label="Fit curve1", linestyle='dashed')
+    plt.plot(new_temps, y1, label="Fit curve", linestyle='dashed')
 
     plt.legend()
+    plt.savefig("Graphs/weinz_curve.png", dpi=200)
     plt.show()
 
     residuals = avg_lambdas - y_data
@@ -125,5 +147,7 @@ if __name__ == "__main__":
     reduced_chi_squared = chi_squared / dof
     # Print result
     print(f"Reduced Chi-Squared: {reduced_chi_squared:.2f}")
-
+    plt.ylabel("Wavelength Residuals (nm)")
+    plt.xlabel("Temperature (K)")
+    plt.savefig("Graphs/weinz_curve_residuals.png", dpi=200)
     plt.show()

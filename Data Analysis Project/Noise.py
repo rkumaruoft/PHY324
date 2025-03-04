@@ -4,9 +4,11 @@ import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import chi2
 
+
 # Define Gaussian function for fitting
 def myGauss(x, A, mean, width, base):
     return A * np.exp(-(x - mean) ** 2 / (2 * width ** 2)) + base
+
 
 # Load the noise data
 with open("noise.pkl", "rb") as file:
@@ -29,7 +31,8 @@ all_noise_samples_keV = all_noise_samples * calibration_factor
 num_bins = 100
 bin_range = (min(all_noise_samples_keV), max(all_noise_samples_keV))
 print(bin_range)
-n, bin_edges, _ = plt.hist(all_noise_samples_keV, bins=num_bins, range=bin_range, color='k', histtype='step', label='Data')
+n, bin_edges, _ = plt.hist(all_noise_samples_keV, bins=num_bins, range=bin_range, color='k', histtype='step',
+                           label='Data')
 bin_centers = 0.5 * (bin_edges[1:] + bin_edges[:-1])
 
 # Add error bars
@@ -57,10 +60,10 @@ plt.legend()
 # Print results
 mean = popt[1]
 sigma = popt[2]
-noise_range = (mean - (3 * sigma), mean + (3 * sigma))
+noise_range = (mean - (2 * sigma), mean + (2 * sigma))
 print("Histogram of Raw Noise Fluctuations (in keV):")
 print("Amp = ", popt[0], "err= ", np.sqrt(pcov[0][0]))
-print("Mean (mu):", mean, "keV" , "err = ", np.sqrt(pcov[1][1]))
+print("Mean (mu):", mean, "keV", "err = ", np.sqrt(pcov[1][1]))
 print("Standard Deviation (sigma):", sigma, "keV", np.sqrt(pcov[2][2]))
 print("Noise Range (mu ± 3σ):", noise_range)
 
@@ -78,7 +81,6 @@ print("chi_prob= ", chi_prob)
 # Save and show the plot
 plt.savefig("plots/histogram_raw_noise_fluctuations_keV.png", dpi=200)
 plt.show()
-
 
 """Residuals"""
 # Compute residuals for the Gaussian fit after calibration

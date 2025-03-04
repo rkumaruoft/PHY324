@@ -117,6 +117,7 @@ y_bestfit1 = myGauss(x_bestfit1, *popt1)
 # Best fit line smoothed with 1000 datapoints. Don't use best fit lines with 5 or 10 data points!
 
 fontsize = 18
+plt.xlim(bin_range1)
 plt.plot(x_bestfit1, y_bestfit1, label='Fit')
 # plt.text(0.235, 40, r'$\mu$ = %3.2f mV' % (popt1[1]), fontsize=fontsize)
 # plt.text(0.235, 35, r'$\sigma$ = %3.2f mV' % (popt1[2]), fontsize=fontsize)
@@ -129,6 +130,13 @@ print("Amp = ", popt1[0], "err = ", np.sqrt(pcov1[0][0]))
 print("mean = ", popt1[1], "err = ", np.sqrt(pcov1[1][1]))
 print("sigma= ", popt1[2], "err = ", np.sqrt(pcov1[2][2]))
 print("reduces_chi=", chisquared1/dof1)
+fontsize = 14
+plt.text(0.232, 40, r'$\mu$ = %3.2f keV' % (popt1[1]), fontsize=fontsize)
+plt.text(0.232, 35, r'$\chi^2$/DOF=', fontsize=fontsize)
+plt.text(0.232, 30, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
+plt.text(0.232, 25, r'$\sigma$ = %3.2f keV' % (popt1[2]), fontsize=fontsize)
+plt.text(0.232, 20, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
+plt.savefig("Plots/pulse_mine_pre.png", dpi=200)
 plt.show()
 """
 Area1 calibration
@@ -173,17 +181,32 @@ dof1 = num_bins1 - len(popt1)
 x_bestfit1 = np.linspace(bin_edges1[0], bin_edges1[-1], 1000)
 y_bestfit1 = myGauss(x_bestfit1, *popt1)
 # Best fit line smoothed with 1000 datapoints. Don't use best fit lines with 5 or 10 data points!
-
+plt.xlim(bin_range1)
 plt.plot(x_bestfit1, y_bestfit1, label='Fit')
-plt.text(9.1, 60, r'$\mu$ = %3.2f keV' % (popt1[1]), fontsize=fontsize)
-plt.text(9.1, 55, r'$\chi^2$/DOF=', fontsize=fontsize)
-plt.text(9.1, 50, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
-plt.text(9.1, 45, r'$\sigma$ = %3.2f keV' % (popt1[2]), fontsize=fontsize)
-plt.text(9.1, 40, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
 plt.legend(loc='upper right')
 print("After calibration")
 print("Amp = ", popt1[0], "err = ", np.sqrt(pcov1[0][0]))
 print("mean = ", popt1[1], "err = ", np.sqrt(pcov1[1][1]))
 print("sigma= ", popt1[2], "err = ", np.sqrt(pcov1[2][2]))
 print("reduces_chi=", chisquared1/dof1)
+fontsize = 14
+plt.text(9.1, 40, r'$\mu$ = %3.2f keV' % (popt1[1]), fontsize=fontsize)
+plt.text(9.1, 35, r'$\chi^2$/DOF=', fontsize=fontsize)
+plt.text(9.1, 30, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
+plt.text(9.1, 25, r'$\sigma$ = %3.2f keV' % (popt1[2]), fontsize=fontsize)
+plt.text(9.1, 20, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
+plt.savefig("Plots/pulse_mine_post.png", dpi=200)
+plt.show()
+
+"""Residuals"""
+# Compute residuals for the Gaussian fit after calibration
+residuals = n1 - myGauss(bin_centers1, *popt1)
+plt.xlim(bin_range1)
+# Plot the residuals with black markers and error bars using '.' marker format
+plt.axhline(0, color='black', linestyle='--', linewidth=1)
+plt.errorbar(bin_centers1, residuals, yerr=sig1, fmt='.k', label='Residuals')
+plt.xlabel('Particle Energy (keV)')
+plt.ylabel('Residuals')
+plt.legend()
+plt.savefig("new_plots/pulse_mine_residuals", dpi=200)
 plt.show()

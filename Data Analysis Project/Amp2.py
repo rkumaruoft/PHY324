@@ -138,6 +138,13 @@ print("Amp = ", popt1[0], "err = ", np.sqrt(pcov1[0][0]))
 print("mean = ", popt1[1], "err = ", np.sqrt(pcov1[1][1]))
 print("sigma= ", popt1[2], "err = ", np.sqrt(pcov1[2][2]))
 print("reduces_chi=", chisquared1/dof1)
+fontsize = 14
+plt.text(0.20, 55, r'$\mu$ = %3.2f keV' % (popt1[1]), fontsize=fontsize)
+plt.text(0.20, 50, r'$\chi^2$/DOF=', fontsize=fontsize)
+plt.text(0.20, 45, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
+plt.text(0.20, 40, r'$\sigma$ = %3.2f keV' % (popt1[2]), fontsize=fontsize)
+plt.text(0.20, 35, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
+plt.savefig("Plots/amp2_pre.png", dpi=200)
 plt.show()
 
 """
@@ -192,12 +199,19 @@ print("mean = ", popt1[1], "err = ", np.sqrt(pcov1[1][1]))
 print("sigma= ", popt1[2], "err = ", np.sqrt(pcov1[2][2]))
 print("reduces_chi=", chisquared1/dof1)
 plt.legend(loc='upper right')
+fontsize = 14
+plt.text(7.8, 55, r'$\mu$ = %3.2f keV' % (popt1[1]), fontsize=fontsize)
+plt.text(7.8, 50, r'$\chi^2$/DOF=', fontsize=fontsize)
+plt.text(7.8, 45, r'%3.2f/%i' % (chisquared1, dof1), fontsize=fontsize)
+plt.text(7.8, 40, r'$\sigma$ = %3.2f keV' % (popt1[2]), fontsize=fontsize)
+plt.text(7.8, 35, r'$\chi^2$ prob.= %1.1f' % (1 - chi2.cdf(chisquared1, dof1)), fontsize=fontsize)
+plt.savefig("Plots/amp2_post.png", dpi=200)
 plt.show()
 
 """Residuals"""
 # Compute residuals for the Gaussian fit after calibration
 residuals = n1 - myGauss(bin_centers1, *popt1)
-
+plt.xlim(bin_range1)
 # Plot the residuals with black markers and error bars using '.' marker format
 plt.axhline(0, color='black', linestyle='--', linewidth=1)
 plt.errorbar(bin_centers1, residuals, yerr=sig1, fmt='.k', label='Residuals')

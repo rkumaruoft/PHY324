@@ -112,6 +112,21 @@ plt.errorbar(bin_centers1, residuals, yerr=sig1, fmt='.k', label='Residuals')
 plt.plot(fit_x_gauss, fit_y_gauss, 'r--', label="Gaussian Fit Curve")
 plt.xlabel('Particle Energy (keV)')
 plt.ylabel('Residuals')
+plt.xlim(bin_range1)
 plt.legend()
 plt.savefig("new_plots/Signal_full_hist_residuals", dpi=200)
+plt.show()
+
+# Compute residuals for Gaussian fit
+gaussian_residuals = residuals - gaussian(bin_centers1, *popt_gauss)
+
+# Plot residuals of Gaussian fit
+plt.figure(figsize=(8, 5))
+plt.axhline(0, color='black', linestyle='--', linewidth=1)
+plt.errorbar(bin_centers1, gaussian_residuals, yerr=sig1, fmt='.k', label='Residuals')
+plt.xlabel('Particle Energy (keV)')
+plt.ylabel('Residuals')
+plt.xlim(bin_range1)
+plt.legend()
+plt.savefig("new_plots/Signal_gauss_residuals", dpi=200)
 plt.show()
