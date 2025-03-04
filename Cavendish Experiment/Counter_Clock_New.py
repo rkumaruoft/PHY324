@@ -10,15 +10,15 @@ from datetime import datetime
 import csv
 
 
-def damped_cosine(t, position_0, tau, omega, phase, base):
-    return position_0 * np.exp(-t / tau) * np.cos((omega * t) + phase) + base
+def damped_cosine_new(t, position_0, tau, omega, phase, b,base):
+    return position_0 * np.exp(-t / tau) * np.cos((omega * t) + phase) + (b/t) +base
 
 
 if __name__ == "__main__":
     time = []
     position = []
     position_uncert = []
-    file = open('data/data_IN_csv/Counterclockwise_averaged.csv', mode='r')
+    file = open('data/data_IN_csv/Counterclockwise_Feb7th.csv', mode='r')
     # Create a CSV reader object
     csv_reader = csv.reader(file)
     # Skip the header row (if there is one)
@@ -48,12 +48,13 @@ if __name__ == "__main__":
     tau_guess = max(t_numeric) / 5 * 1  # Rough estimate of decay time
     omega_guess = 2 * np.pi / (max(t_numeric) / 10)  # Estimate period from observed data
     phase_guess = 0  # Assume initial phase 0
+    b_guess = -0.01270
     base_guess = np.mean(position)  # Baseline position
 
     # Updated initial guesses
-    p0 = [amplitude_guess, tau_guess, omega_guess, phase_guess, base_guess]
-    popt, pcov = curve_fit(damped_cosine, xdata=t_numeric, ydata=position, sigma=position_uncert, p0=p0, maxfev=1000000)
-    position_fit = np.array(damped_cosine(t_numeric, *popt))
+    p0 = [amplitude_guess, tau_guess, omega_guess, phase_guess, b_guess,base_guess]
+    popt, pcov = curve_fit(damped_cosine_new, xdata=t_numeric, ydata=position, sigma=position_uncert, p0=p0, maxfev=1000000)
+    position_fit = np.array(damped_cosine_new(t_numeric, *popt))
     ax.plot(time, position_fit, color="red", label="Fit Line")
 
     """From Curve fit"""
@@ -61,7 +62,8 @@ if __name__ == "__main__":
     print("Decay Factor (tau) = ", popt[1], "err=", np.sqrt(pcov[1][1]))
     print("Angular Frequency (omega) = ", popt[2], "err=", np.sqrt(pcov[2][2]))
     print("Wave Phase (phi) = ", popt[3], "err=", np.sqrt(pcov[3][3]))
-    print("Equilibrium position for Counter Clockwise (base)= ", popt[4], "err=", np.sqrt(pcov[4][4]))
+    print("b = ", popt[4],"err= ", np.sqrt(pcov[4][4]))
+    print("Equilibrium position for Counter Clockwise (base)= ", popt[5], "err=", np.sqrt(pcov[5][5]))
     print("Period (Counter) = ", 2 * np.pi / popt[2], "err = ", 2 * np.pi * pcov[2][2]/ (popt[2] ** 2))
 
     plt.xlabel("Time")
@@ -84,8 +86,7 @@ if __name__ == "__main__":
 
     # Plot residuals
     fig, ax = plt.subplots(figsize=(8, 4))
-    ax.errorbar(time, residuals, yerr=position_uncert,marker=".", linestyle="None",
-                markersize=5, alpha=0.2, label="Residuals")
+    ax.errorbar(time, residuals, yerr=position_uncert,marker=".", markersize=5, alpha=0.2, label="Residuals")
     ax.axhline(0, color="red", linestyle="--", linewidth=1)  # Zero residual line
 
     # Format x-axis
