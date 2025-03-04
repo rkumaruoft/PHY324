@@ -23,7 +23,6 @@ if __name__ == "__main__":
     csv_reader = csv.reader(file)
     # Skip the header row (if there is one)
     next(csv_reader, None)
-    # time_cutoff = datetime.strptime("12:27:00.000", '%H:%M:%S.%f')
     for row in csv_reader:
         this_time = datetime.strptime(row[0], '%H:%M:%S.%f')
         if float(row[1]) > 0.01:
@@ -33,13 +32,9 @@ if __name__ == "__main__":
 
     fig, ax = plt.subplots(figsize=(8, 4))  # Create figure and axis
 
-    ax.scatter(time, position, marker=".", s=5, label="Raw Data")
+    # ax.scatter(time, position, marker=".", s=5, label="Raw Data")
     ax.errorbar(time, position, yerr=position_uncert, marker=".", linestyle="None",
-                markersize=5, label="Raw Data", alpha=1)
-
-    for bar in ax.containers:  # Reduce transparency of error bars only
-        for cap in bar[1]:
-            cap.set_alpha(0.5)  # Adjust this for lower error bar opacity
+                markersize=5,alpha=0.2, label="Raw Data")
 
     # Format the x-axis (must use `ax.xaxis`, not `plt.xaxis`)
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))  # Custom format
@@ -50,7 +45,7 @@ if __name__ == "__main__":
     t_numeric = np.array([(t - time[0]).total_seconds() for t in time])
     # Estimate reasonable initial parameters from data
     amplitude_guess = max(position) - min(position)  # Approximate amplitude
-    tau_guess = max(t_numeric) / 5  # Rough estimate of decay time
+    tau_guess = max(t_numeric) / 5 * 1  # Rough estimate of decay time
     omega_guess = 2 * np.pi / (max(t_numeric) / 10)  # Estimate period from observed data
     phase_guess = 0  # Assume initial phase 0
     base_guess = np.mean(position)  # Baseline position
@@ -58,7 +53,7 @@ if __name__ == "__main__":
     # Updated initial guesses
     p0 = [amplitude_guess, tau_guess, omega_guess, phase_guess, base_guess]
     popt, pcov = curve_fit(damped_cosine, xdata=t_numeric, ydata=position, sigma=position_uncert, p0=p0, maxfev=1000000)
-    position_fit = damped_cosine(t_numeric, *popt)
+    position_fit = np.array(damped_cosine(t_numeric, *popt))
     ax.plot(time, position_fit, color="red", label="Fit Line")
 
     """From Curve fit"""
@@ -67,10 +62,42 @@ if __name__ == "__main__":
     print("Angular Frequency (omega) = ", popt[2], "err=", np.sqrt(pcov[2][2]))
     print("Wave Phase (phi) = ", popt[3], "err=", np.sqrt(pcov[3][3]))
     print("Equilibrium position for Counter Clockwise (base)= ", popt[4], "err=", np.sqrt(pcov[4][4]))
-    print("Period (Counter) = ", 2 * np.pi / popt[2])
+    print("Period (Counter) = ", 2 * np.pi / popt[2], "err = ", 2 * np.pi * pcov[2][2]/ (popt[2] ** 2))
 
     plt.xlabel("Time")
     plt.ylabel("Position")
     plt.xticks(rotation=45)  # Rotate labels to avoid overlap
+    plt.grid(True)
+    plt.show()
+
+    """Residuals"""
+    # Compute residuals
+    residuals = position - position_fit
+
+    # Compute reduced chi-squared
+    degrees_of_freedom = len(position) - len(popt)
+    chi_squared = np.sum((residuals / position_uncert) ** 2)
+    reduced_chi_squared = chi_squared / degrees_of_freedom
+
+    # Compute fit probability (p-value)
+    p_value = 1 - chi2.cdf(chi_squared, degrees_of_freedom)
+
+    # Plot residuals
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax.errorbar(time, residuals, yerr=position_uncert,marker=".", markersize=5, alpha=0.2, label="Residuals")
+    ax.axhline(0, color="red", linestyle="--", linewidth=1)  # Zero residual line
+
+    # Format x-axis
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))
+    ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=5))
+    ax.xaxis.set_minor_locator(mdates.SecondLocator(interval=30))
+    plt.xticks(rotation=45)
+
+    print(reduced_chi_squared)
+    print(p_value)
+    # Labels and grid
+    plt.xlabel("Time")
+    plt.ylabel("Residual (Data - Fit)")
+    plt.legend()
     plt.grid(True)
     plt.show()

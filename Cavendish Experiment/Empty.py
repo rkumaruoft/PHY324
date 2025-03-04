@@ -30,7 +30,8 @@ if __name__ == "__main__":
             position_uncert.append(0.001)
     fig, ax = plt.subplots(figsize=(8, 4))  # Create figure and axis
     # ax.scatter(time, position, marker=".", s=5, label="Raw Data")
-    ax.errorbar(time, position, yerr=position_uncert, marker=".", markersize=5, label="Raw Data", alpha=0.5)
+    ax.errorbar(time, position, yerr=position_uncert, marker=".", linestyle="None",
+                markersize=5, label="Raw Data", alpha=0.2)
 
     # Format the x-axis (must use `ax.xaxis`, not `plt.xaxis`)
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))  # Custom format
@@ -66,6 +67,38 @@ if __name__ == "__main__":
     print("Wave Phase (phi) = ", popt[3], "err=", np.sqrt(pcov[3][3]))
     print("Equilibrium position for Empty (base)= ", popt[4], "err=", np.sqrt(pcov[4][4]))
 
-    print("Period (Empty) = ", 2*np.pi/popt[2])
+    print("Period (Empty) = ", 2*np.pi/popt[2], "err = ", 2 * np.pi * pcov[2][2]/ (popt[2] ** 2))
 
+    plt.show()
+
+    """Residuals"""
+    # Compute residuals
+    residuals = position - position_fit
+
+    # Compute reduced chi-squared
+    degrees_of_freedom = len(position) - len(popt)
+    chi_squared = np.sum((residuals / position_uncert) ** 2)
+    reduced_chi_squared = chi_squared / degrees_of_freedom
+
+    # Compute fit probability (p-value)
+    p_value = 1 - chi2.cdf(chi_squared, degrees_of_freedom)
+
+    # Plot residuals
+    fig, ax = plt.subplots(figsize=(8, 4))
+    ax.errorbar(time, residuals, yerr=position_uncert,marker=".", markersize=5, alpha=0.2, label="Residuals")
+    ax.axhline(0, color="red", linestyle="--", linewidth=1)  # Zero residual line
+
+    # Format x-axis
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))
+    ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=5))
+    ax.xaxis.set_minor_locator(mdates.SecondLocator(interval=30))
+    plt.xticks(rotation=45)
+
+    print(reduced_chi_squared)
+    print(p_value)
+    # Labels and grid
+    plt.xlabel("Time")
+    plt.ylabel("Residual (Data - Fit)")
+    plt.legend()
+    plt.grid(True)
     plt.show()
