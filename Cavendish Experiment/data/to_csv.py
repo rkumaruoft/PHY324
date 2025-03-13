@@ -5,7 +5,10 @@ import pandas as pd
 file_paths = [
     "Clockwise_Feb7th.txt",
     "Counterclockwise_Feb7th.txt",
-    "Empty_Feb7th.txt"
+    "Empty_Feb7th.txt",
+    "Device2_Counterclockwise.txt",
+    "Device2Clockwise.txt",
+    "Device2Empty.txt"
 ]
 
 # Directory to save the CSV files

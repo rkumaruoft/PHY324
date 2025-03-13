@@ -18,7 +18,7 @@ if __name__ == "__main__":
     time = []
     position = []
     position_uncert = []
-    file = open('data/data_IN_csv/Counterclockwise_averaged.csv', mode='r')
+    file = open('data/data_IN_csv/Counterclockwise_Feb7th.csv', mode='r')
     # Create a CSV reader object
     csv_reader = csv.reader(file)
     # Skip the header row (if there is one)
@@ -28,7 +28,7 @@ if __name__ == "__main__":
         if float(row[1]) > 0.01:
             time.append(this_time)
             position.append(float(row[1]))
-            position_uncert.append(0.001)
+            position_uncert.append(0.00539)
 
     fig, ax = plt.subplots(figsize=(8, 4))  # Create figure and axis
 

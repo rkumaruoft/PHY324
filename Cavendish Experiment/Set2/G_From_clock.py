@@ -50,15 +50,15 @@ def propagate_uncertainty_G(M1, M2, x1, x2, T, theta, d,
 
 
 if __name__ == "__main__":
-    equil_empty = 0.1790957545040282
-    equil_empty_err = 6.707977268824151e-06
-    T_empty = 304.582059688089
-    T_empty_err = 1.200669150414119e-07
+    equil_empty = 0.06056076966601571
+    equil_empty_err = np.sqrt((1.2037739120807117e-05 ** 2) + (0.00539 ** 2))
+    T_empty = 305.4480989240732
+    T_empty_err = 0.0990476308033528
 
-    equil_clock = 0.20072349644038168
-    equil_clock_err = 2.6975467279274043e-05
-    T_clock = 304.73461082572953
-    T_clock_err = 2.324956493044523e-06
+    equil_clock = 0.0766460006220865
+    equil_clock_err = np.sqrt((1.3271174537436205e-05 ** 2) + (0.00539 ** 2))
+    T_clock = 305.7644436989172 * 1.3
+    T_clock_err = 0.09234938380026764
 
     T = T_clock
     T_err = T_clock_err
@@ -66,6 +66,7 @@ if __name__ == "__main__":
 
     s = equil_clock - equil_empty
     s_err = np.sqrt((equil_empty_err ** 2) + (equil_clock_err ** 2))
+    print("S = ", s, "Err = ", s_err)
 
     L = 4.47291  # meters
     L_err = 0.001
@@ -74,14 +75,14 @@ if __name__ == "__main__":
 
     d = 0.05
 
-    theta = s / (2 * L)
+    theta = np.arctan(s / (2 * L))
     theta_err = theta * np.sqrt(((s_err / s) ** 2) + ((L_err / L) ** 2))
 
     print("Theta = ", theta, "err = ", theta_err)
 
     """Ball Specs"""
-    m1, m1_err = 1444.5e-3, 0.1e-3
-    m2, m2_err = 1467.9e-3, 0.1e-3
+    m1, m1_err = 1477.4e-3, 0.1e-3
+    m2, m2_err = 1472.9e-3, 0.1e-3
     r1, r1_err = 63.72e-3, 0.01e-3
     r2, r2_err = 63.89e-3, 0.01e-3
 
@@ -91,6 +92,7 @@ if __name__ == "__main__":
     x2_err = np.sqrt((r2_err ** 2) + ((d * np.cos(theta) * theta_err) ** 2))
 
     G = 8 * (np.pi ** 2) * d * theta / (np.cos(theta) * (T ** 2) * ((m1/(x1**2)) + m2 / (x2**2)))
+
     G_err = propagate_uncertainty_G(m1, m2, x1, x2, T, theta, d,
                                     m1_err, m2_err, x1_err, x2_err, T_err, theta_err)
     factor = 1

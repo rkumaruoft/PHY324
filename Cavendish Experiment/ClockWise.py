@@ -29,21 +29,15 @@ if __name__ == "__main__":
         if float(row[1]) > 0.01:
             time.append(this_time)
             position.append(float(row[1]))
-            position_uncert.append(0.001)
+            position_uncert.append(0.00539)
 
-    fig, ax = plt.subplots(figsize=(8, 4))  # Create figure and axis
+    t_numeric = np.array([(t - time[0]).total_seconds() for t in time])
 
     # ax.scatter(time, position, marker=".", s=5, label="Raw Data")
-    ax.errorbar(time, position, yerr=position_uncert, marker=".", linestyle="None",
+    plt.errorbar(t_numeric, position, yerr=position_uncert, marker=".", linestyle="None",
                 markersize=5, label="Raw Data", alpha=0.2)
 
-    # Format the x-axis (must use `ax.xaxis`, not `plt.xaxis`)
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))  # Custom format
-    ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=5))  # Major ticks every 5 minutes
-    ax.xaxis.set_minor_locator(mdates.SecondLocator(interval=30))  # Minor ticks every 30 seconds
-
     # """Fitting a damped cosine"""
-    t_numeric = np.array([(t - time[0]).total_seconds() for t in time])
 
     # Estimate reasonable initial parameters from data
     amplitude_guess = max(position) - min(position)  # Approximate amplitude
@@ -57,7 +51,7 @@ if __name__ == "__main__":
 
     popt, pcov = curve_fit(damped_cosine, xdata=t_numeric, ydata=position, sigma=position_uncert, p0=p0, maxfev=1000)
     position_fit = np.array(damped_cosine(t_numeric, *popt))
-    ax.plot(time, position_fit, color="red", label="Fit Line")
+    plt.plot(t_numeric, position_fit, color="red", label="Fit Line")
 
     """From Curve fit"""
     print("Position Amplitude (p0) = ", popt[0], "err=", np.sqrt(pcov[0][0]))
@@ -69,11 +63,9 @@ if __name__ == "__main__":
 
     plt.xlabel("Time")
     plt.ylabel("Position")
-    plt.xticks(rotation=45)  # Rotate labels to avoid overlap
     plt.grid(True)
     plt.legend()
     plt.show()
-
 
     """Residuals"""
     # Compute residuals
@@ -88,15 +80,8 @@ if __name__ == "__main__":
     p_value = 1 - chi2.cdf(chi_squared, degrees_of_freedom)
 
     # Plot residuals
-    fig, ax = plt.subplots(figsize=(8, 4))
-    ax.errorbar(time, residuals, yerr=position_uncert, marker=".", markersize=5, alpha=0.2,linestyle="None", label="Residuals")
-    ax.axhline(0, color="red", linestyle="--", linewidth=1)  # Zero residual line
-
-    # Format x-axis
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))
-    ax.xaxis.set_major_locator(mdates.MinuteLocator(interval=5))
-    ax.xaxis.set_minor_locator(mdates.SecondLocator(interval=30))
-    plt.xticks(rotation=45)
+    plt.errorbar(t_numeric, residuals, yerr=position_uncert, marker=".", markersize=5, alpha=0.2,linestyle="None", label="Residuals")
+    plt.axhline(0, color="red", linestyle="--", linewidth=1)  # Zero residual line
 
     print(reduced_chi_squared)
     print(p_value)
