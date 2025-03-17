@@ -80,8 +80,8 @@ if __name__ == "__main__":
     t_numeric = np.array([(t - time[0]).total_seconds() for t in time])
     fig, ax = plt.subplots(figsize=(8, 4))
     # ax.scatter(time, position, marker=".", s=5, label="Raw Data")
-    ax.errorbar(t_numeric, position, yerr=position_uncert, marker=".", markersize=5, color='red', ecolor="lightblue",
-                alpha=0.2, linestyle="None", label="Mirror Angle")
+    ax.errorbar(t_numeric, position, yerr=position_uncert, marker=".", markersize=5, color='yellow', ecolor="lightblue",
+                alpha=0.1, linestyle="None", label="Raw Data")
 
     # """Fitting a damped cosine"""
 
@@ -145,8 +145,8 @@ if __name__ == "__main__":
     # Updated initial guesses
     p0 = [amplitude_guess, tau_guess, T_guess, phase_guess, base_guess]
     fig, ax = plt.subplots(figsize=(8, 4))
-    ax.errorbar(t_numeric, thetas, yerr=thetas_uncert, marker=".", markersize=5, color='red', ecolor="lightblue",
-                alpha=0.2, linestyle="None", label="Mirror Angle")
+    ax.errorbar(t_numeric, thetas, yerr=thetas_uncert, marker=".", markersize=5, color='yellow', ecolor="lightblue",
+                alpha=0.1, linestyle="None", label="Raw Data")
     popt, pcov = curve_fit(damped_cosine, xdata=t_numeric, p0=p0, ydata=thetas, maxfev=10000)
     thetas_fit = np.array(damped_cosine(t_numeric, *popt))
     ax.plot(t_numeric, thetas_fit, color="red", label="Fit Line")
