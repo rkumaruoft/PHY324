@@ -33,10 +33,8 @@ if __name__ == "__main__":
     t_numeric = np.array([(t - time[0]).total_seconds() for t in time])
 
     fig, ax = plt.subplots(figsize=(8, 4))  # Create figure and axis
-    # ax.scatter(time, position, marker=".", s=5, label="Raw Data")
-    ax.errorbar(t_numeric, position, yerr=position_uncert, marker=".", linestyle="None",
-                color='red', ecolor="lightblue", markersize=5, label="Raw Data", alpha=0.2)
-
+    ax.errorbar(t_numeric, position, yerr=position_uncert, marker=".", markersize=5, color='yellow', ecolor="lightblue",
+                alpha=0.1, linestyle="None", label="Raw Data")
     """Fitting a damped cosine"""
 
     # Estimate reasonable initial parameters from data
