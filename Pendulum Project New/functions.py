@@ -34,5 +34,5 @@ def damped_cosine(t, A, omega, phi, tau, B):
     return A * np.cos(omega * t + phi) * np.exp(-t / tau) + B
 
 def fit_damped_cosine(section_times, section_thetas, section_uncert, p0):
-    popt, pcov = curve_fit(damped_cosine, section_times, section_thetas, sigma=section_uncert, p0=p0,maxfev=100000000)
+    popt, pcov = curve_fit(damped_cosine, section_times, section_thetas, sigma=section_uncert,maxfev=100000000)
     return popt, pcov  # Return the optimized parameters

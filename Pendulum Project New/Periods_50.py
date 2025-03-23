@@ -6,15 +6,15 @@ from scipy.optimize import curve_fit
 from scipy.stats import chi2
 
 
-def quadratic_fit(x, a, b, c):\
-    return a * x ** 2 + b * x**3 + c
+def quadratic_fit(x, a, b, c):
+    return a * x ** 3 + b * x**2 + c
 
 
 def absolute_fit(x, a, b):
     return a * np.abs(x) + b
 
 
-data = pd.read_csv('periods_and_taus_200.csv', skiprows=1, header=None).values  # Skipping header row
+data = pd.read_csv('periods_and_taus_50.csv', skiprows=1, header=None).values  # Skipping header row
 
 # Extract columns efficiently
 init_theta, period, p_err, tau, tau_err = data[:, 0], data[:, 1], data[:, 2], data[:, 3], data[:, 4]
